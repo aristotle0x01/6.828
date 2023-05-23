@@ -31,9 +31,22 @@ ssh -p '2222' 'root@127.0.0.1'
 
 
 
-**User & key**
+**user & key**
 
 <u>jos: 123456</u>
+
+
+
+**disable sleep**
+
+[How do I disable my system from going to sleep?](https://askubuntu.com/questions/47311/how-do-i-disable-my-system-from-going-to-sleep)
+
+```
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+
+sudo vi /etc/default/acpi-support # and then set SUSPEND_METHODS="none"
+sudo /etc/init.d/acpid restart
+```
 
 
 
