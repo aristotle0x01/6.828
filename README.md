@@ -20,7 +20,7 @@ cat /etc/lsb-release
 
 **ssh vm:**
 
-<img src="raw/ssh_port.jpeg" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="./raw/ssh_port.jpeg" alt="ssh_port" style="zoom:50%;float: left" />
 
 [How to enable ssh root access ubuntu 16.04 [duplicate\]](https://askubuntu.com/questions/951581/how-to-enable-ssh-root-access-ubuntu-16-04)
 
