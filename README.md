@@ -1,4 +1,7 @@
+
+
 # 6.828
+
 6.828 based on https://pdos.csail.mit.edu/6.828/2018/schedule.html
 
 
@@ -46,6 +49,20 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 
 sudo vi /etc/default/acpi-support # and then set SUSPEND_METHODS="none"
 sudo /etc/init.d/acpid restart
+```
+
+[Ubuntu 16.04 - GUI freezes on login start page](https://unix.stackexchange.com/questions/368748/ubuntu-16-04-gui-freezes-on-login-start-page)
+
+```
+apt-get update 
+apt-get install xserver-xorg-input-all
+apt-get install ubuntu-desktop
+apt-get install ubuntu-minimal
+apt-get install xorg xserver-xorg
+apt-get install xserver-xorg-input-evdev    //I think this packet was the problem
+apt-get install xserver-xorg-video-vmware
+/etc/init.d/lightdm restart
+reboot
 ```
 
 
