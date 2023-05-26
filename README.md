@@ -93,3 +93,12 @@ with: SSL certificate problem: certificate has expired error =>
 git -c http.sslVerify=false clone https://pdos.csail.mit.edu/6.828/2018/jos.git lab
 ```
 
+
+
+**Exercise 7**
+
+the first instruction failed would be `jmp *%eax `  (entry.S line 68: jmp 0xf010002c)
+
+<img src="./raw/lab1-e7-1.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+
+<img src="./raw/lab1-e7-2.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
