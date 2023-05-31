@@ -100,5 +100,5 @@ add "#include <sys/sysmacros.h>" to "qga/commands-posix.c"
 
 ## Lab1
 
-Refer to: **lab1.md**
+Refer to: [lab1.md](lab1.md)
 
