@@ -74,7 +74,43 @@ echo hello world >/tmp/xyz; wc </tmp/xyz
 
 
 
-### skill set
+### process abstraction mechanism
+
+- user/kernel mode flag
+
+  kernel / user stack
+
+  hardware privilege level
+
+- address spaces
+
+  page table
+
+  kernel / user space arrangement?
+
+  MMU
+
+- time-slicing
+
+  context switch
+
+
+
+
+
+### Questions
+
+The indirect jump is needed because the assembler would otherwise generate a PC-relative direct jump, which would execute the low-memory version of main?
+
+
+
+Modify xv6 so that the pages for the kernel are shared among processes, which reduces memory consumption
+
+
+
+
+
+### skill sets
 
 **tool**:
 
@@ -89,5 +125,4 @@ echo hello world >/tmp/xyz; wc </tmp/xyz
 - i/o port development: [Chapter 6: Parallel I/O ports](https://users.ece.utexas.edu/~valvano/Volume1/E-Book/C6_MicrocontrollerPorts.htm)
 - makefile
 - C: K & R
-
 
