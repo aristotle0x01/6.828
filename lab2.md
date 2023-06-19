@@ -112,10 +112,18 @@ Modify xv6 so that the pages for the kernel are shared among processes, which re
 
 ### skill sets
 
-**tool**:
+**physical & virtual page table views**:
 
-- objdump
-- gdb: CSCI0330 gdb Cheatsheet *Fall 2018*
+- qemu
+
+  ```
+  info mem
+  info pg
+  ```
+
+- **xp paddr** vs **x vaddr**
+
+  view content in virtual & physical address, should be the same 
 
 **knowledge**:
 
