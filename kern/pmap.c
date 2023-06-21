@@ -180,7 +180,6 @@ mem_init(void)
 	uint32_t upper = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
 	physaddr_t phy = PADDR(pages);
 	for (uint32_t i = 0; i < upper; i += PGSIZE) {
-		// assert(check_va2pa(pgdir, UPAGES + i) == PADDR(pages) + i);
 		struct PageInfo *page = pa2page(phy);
 		page_insert(kern_pgdir, page, (void *)(UPAGES + i), PTE_U | PTE_P);
 		phy += PGSIZE;
@@ -394,16 +393,12 @@ page_decref(struct PageInfo* pp)
 pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
-	pte_t *r = NULL;
-
 	// Fill this function in
 	assert(pgdir);
 
+	pte_t *r = NULL;
 	pde_t *pd_entry = &pgdir[PDX(va)];
-	if (*pd_entry & PTE_P) {
-		pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
-		r = &pt_base[PTX(va)];
-	} else {
+	if (!(*pd_entry & PTE_P)) {
 		if (0 == create) {
 			return r;
 		}
@@ -415,10 +410,9 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 		pi->pp_ref++;
 		physaddr_t phy_addr = page2pa(pi);
 		*pd_entry = (phy_addr & ~0xfff) | PTE_P | PTE_W | PTE_U;
-
-		pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
-		r = &pt_base[PTX(va)];
-	}
+	} 
+	pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
+	r = &pt_base[PTX(va)];
 
 	return r;
 }
@@ -482,8 +476,8 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 		return -E_NO_MEM;
 	}
 	if (*pte & PTE_P) {
-		// if va->pp mapping already exists, page_remove may free pp, which is wrong
-		// so inc/dec pp->pp_ref around page_remove to avoid this scenario
+		// if va<->pp mapping already exists, page_remove may free pp which it shouldn't
+		// inc/dec pp->pp_ref around page_remove to avoid scenario above
 		++(pp->pp_ref);
 		page_remove(pgdir, va);
 		--(pp->pp_ref);
