@@ -2,13 +2,13 @@
 
 ## Lab2
 
-### **File descriptors**
+## **File descriptors**
 
 - xv6 kernel uses the file descriptor as an index into a per-process table, so that every process has a private space of file descriptors starting at zero
 - Two file descriptors **share an offset** if they were derived from the same original file descriptor by a sequence of fork and dup calls
 - A newly allocated file descriptor is always the lowest-numbered unused descriptor of the current process
 
-**APIs**
+### **APIs**
 
 - fork
 
@@ -43,8 +43,6 @@
   // hello world
   ```
 
-
-
 ### **Pipes**
 
 ```
@@ -74,7 +72,7 @@ echo hello world >/tmp/xyz; wc </tmp/xyz
 
 
 
-### process abstraction mechanism
+## process abstraction mechanism
 
 - user/kernel mode flag
 
@@ -96,21 +94,188 @@ echo hello world >/tmp/xyz; wc </tmp/xyz
 
 
 
+## Questions
+
+### lab2
+
+- physical mem management
+- virtual/phy mem mapping
+- kernel/user mem privilege
+
+### general
+
+- what's segmentation?
+
+- what's paging and why is it needed?
+
+- privilege level implementation with segmentation and paging?
+
+### specifics
+
+- The indirect jump is needed because the assembler would otherwise generate a PC-relative direct jump, which would execute the low-memory version of main?
+- Modify xv6 so that the pages for the kernel are shared among processes, which reduces memory consumption
+
+### ref
+
+**IA-32 **Volume 3(System Programming Guide)**: **chapter 3 protected-mode memory management
+
+[Intel 80386 Reference Programmer's Manual](https://pdos.csail.mit.edu/6.828/2018/readings/i386/toc.htm) : Chapter 5-Memory Management & Chapter 6-Protection
+
+[x86_translation_and_registers](https://pdos.csail.mit.edu/6.828/2018/lec/x86_translation_and_registers.pdf)
+
+------
+
+### general: segmentation
+
+segmentation is a way of dividing memory for programs: 
+
+- flat model
+- protected flat model
+- multi-segmented model
+
+<img src="./raw/lab2-1.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+
+most os today uses flat model, which amounts to not using segmentation. Since it would require programs all loaded in memory, does not make economical sense.
+
+#### logical, effective, linear and physical address
+
+<img src="./raw/lab2-2.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
+
+<img src="./raw/lab2-3.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+
+#### **Segment Selectors**
+
+<img src="./raw/lab2-4.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+
+- index: 15-3, support 8192 descriptors in GDT
+- TI: 0=GDT, 1=LDT
+- RPL: **Requested Privilege Level (RPL)**, RPL & CPL & DPL
+
+##### **segment Registers**
+
+<img src="./raw/lab2-5.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+
+> When a segment selector is loaded into the visible part of a segment register, the processor also loads the hidden part of the segment register with the base address, segment limit, and access control information from the segment descriptor pointed to by the segment selector
+
+two kinds of instructions for loading segment registers:
+
+1. MOV, POP, LDS, LES, LSS, LGS, and LFS
+2. CALL, JMP, and RET, IRET, INT*n*, INTO and INT3, these instructions change the CS register
+
+##### **segment & system Descriptors**
+
+if the **<u>S</u>** bit 0 for system descriptor, 1 for segment descriptor
+
+<img src="./raw/lab2-6.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+
+**segment descriptor**:GDTR Register
+
+> A segment descriptor is a data structure in a GDT or LDT that provides the processor with the size and location of a segment, as well as access control and status information. Segment descriptors are typically created by compilers, linkers, loaders, or the operating system or executive, but not application programs
+
+two types of segment descriptor (stack is also data): code and data
+
+<img src="./raw/lab2-7.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
+
+> All data segments are nonconforming, meaning that they cannot be accessed by less privileged programs or procedures
+>
+> (code segment) A transfer of execution into a more-privileged conforming segment allows execution to continue at the current privilege level
+
+*Global and Local Descriptor Tables*
+
+<img src="./raw/lab2-9.jpg?raw=true" alt="ssh_port" style="zoom:30%;float: left" />
+
+**system descriptor**: IDTR register
+
+- Local descriptor-table (LDT) segment descriptor
+- Task-state segment (TSS) descriptor
+- Call-gate descriptor
+- Interrupt-gate descriptor
+- Trap-gate descriptor
+- Task-gate descriptor
+
+<img src="./raw/lab2-8.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
 
 
-### Questions
 
-The indirect jump is needed because the assembler would otherwise generate a PC-relative direct jump, which would execute the low-memory version of main?
+看一看代码层面的数据结构；看一下执行时的情况
+
+分析一下GDT加载的情况
+
+### general: paging
+
+#### why paging?
+
+To effiently share physical memory between multiple tasks, given them a 4Gb consistent view of address space.
+
+#### basics
+
+- **PG (paging) flag.** Bit 31 of CR0
+- **PDBR**: the physical address of the current page directory is stored in the CR3 register
+- **TLBs**: the processor stores the most recently used page-directory and page-table entries in on-chip caches called translation lookaside buffers or TLBs.  **INVLPG** instruction is provided to invalidate a specific page-table entry in the TLB
+
+#### translation
+
+<img src="./raw/lab2-11.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+
+------
+
+<img src="./raw/lab2-10.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
 
 
 
-Modify xv6 so that the pages for the kernel are shared among processes, which reduces memory consumption
+### lab2 paging
+
+#### configuration
+
+**enable paging**
+
+```
+# Load the physical address of entry_pgdir into cr3.  entry_pgdir
+# is defined in entrypgdir.c.
+movl	$(RELOC(entry_pgdir)), %eax
+movl	%eax, %cr3
+# Turn on paging.
+movl	%cr0, %eax
+orl	$(CR0_PE|CR0_PG|CR0_WP), %eax
+movl	%eax, %cr0
+```
+
+**initial paging directory**
+
+```
+pde_t entry_pgdir[1024] = {
+	// Map VA's [0, 4MB) to PA's [0, 4MB)
+	[0] = ((uintptr_t)entry_pgtable - KERNBASE) + PTE_P,
+	// Map VA's [KERNBASE, KERNBASE+4MB) to PA's [0, 4MB)
+	[KERNBASE>>PDXSHIFT] = ((uintptr_t)entry_pgtable - KERNBASE) + PTE_P + PTE_W
+};
+
+// Entry 0 of the page table maps to physical page 0, entry 1 to
+// physical page 1, etc.
+pte_t entry_pgtable[1024] = {
+	0x000000 | PTE_P | PTE_W,
+	0x001000 | PTE_P | PTE_W,
+	...
+	0x3ff000 | PTE_P | PTE_W }
+```
+
+#### jos paging implementation
+
+<img src="./raw/lab2-14.png?raw=true" alt="ssh_port" style="zoom:100%;float: left" />
 
 
 
 
 
-### skill sets
+### privilege level checking with segmentation and paging
+
+RPL CPL DPL
+
+
+
+
+
+## skill sets
 
 **physical & virtual page table views**:
 
