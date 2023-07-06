@@ -16,3 +16,6 @@
 /sol?/
 /myapi.key
 /.suf
+
+raw/.DS_Store
+.DS_Store
