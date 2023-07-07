@@ -54,7 +54,7 @@ i386_detect_memory(void)
 
 	extern char end[];
 	cprintf("Physical memory: %uK available, base = %uK, extended = %uK, total pages = %d, basemem pages = %d, end = 0x%08lx\n",
-		totalmem, basemem, totalmem - basemem, npages, npages_basemem, PADDR(end));
+		totalmem, basemem, totalmem - basemem, npages, npages_basemem, end);
 }
 
 
@@ -159,6 +159,8 @@ mem_init(void)
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
 	// LAB 3: Your code here.
+	envs = (struct Env *) boot_alloc(NENV * sizeof(struct Env));
+	memset(envs, 0, NENV * sizeof(struct Env));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -197,6 +199,13 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
+	upper = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
+	phy = PADDR(envs);
+	for (uint32_t i = 0; i < upper; i += PGSIZE) {
+		struct PageInfo *page = pa2page(phy);
+		page_insert(kern_pgdir, page, (void *)(UENVS + i), PTE_U | PTE_P);
+		phy += PGSIZE;
+	}
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
