@@ -88,9 +88,9 @@ trap_init(void)
 	cprintf("  handler address 0x%08x 0x%08x\n", handler0, &handler0);
 	// LAB 3: Your code here.
 	SETGATE(idt[T_DIVIDE], 0, GD_KT, handler0, 0);
-	SETGATE(idt[T_DEBUG], 0, GD_KT, &handler1, 0);
+	SETGATE(idt[T_DEBUG], 0, GD_KT, &handler1, 3);
 	SETGATE(idt[T_NMI], 0, GD_KT, handler2, 0);
-	SETGATE(idt[T_BRKPT], 0, GD_KT, handler3, 0);
+	SETGATE(idt[T_BRKPT], 0, GD_KT, handler3, 3);
 	SETGATE(idt[T_OFLOW], 0, GD_KT, handler4, 0);
 	SETGATE(idt[T_BOUND], 0, GD_KT, handler5, 0);
 	SETGATE(idt[T_ILLOP], 0, GD_KT, handler6, 0);
@@ -185,7 +185,12 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
 	switch (tf->tf_trapno) {
-		case T_PGFLT: 
+		case T_DEBUG:
+			return;
+		case T_BRKPT:
+			monitor(tf);
+			return;
+		case T_PGFLT:
 			page_fault_handler(tf);
 			return;
 		default:
