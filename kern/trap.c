@@ -81,6 +81,7 @@ trap_init(void)
 	extern void handler17();
 	extern void handler18();
 	extern void handler19();
+	extern void handler48();
 
 	// when you use func in an expression, it is equivalent to using &func, 
 	// which explicitly takes the address of the function. Both func and &func 
@@ -105,6 +106,8 @@ trap_init(void)
 	SETGATE(idt[T_ALIGN], 0, GD_KT, handler17, 0);
 	SETGATE(idt[T_MCHK], 0, GD_KT, handler18, 0);
 	SETGATE(idt[T_SIMDERR], 0, GD_KT, handler19, 0);
+
+	SETGATE(idt[T_SYSCALL], 1, GD_KT, handler48, 3);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -186,24 +189,32 @@ trap_dispatch(struct Trapframe *tf)
 	// LAB 3: Your code here.
 	switch (tf->tf_trapno) {
 		case T_DEBUG:
-			return;
+			break;
 		case T_BRKPT:
 			monitor(tf);
-			return;
+			break;
 		case T_PGFLT:
 			page_fault_handler(tf);
-			return;
-		default:
 			break;
-	}
-
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
+		case T_SYSCALL:
+			tf->tf_regs.reg_eax = syscall(
+				tf->tf_regs.reg_eax,
+				tf->tf_regs.reg_edx,
+				tf->tf_regs.reg_ecx,
+				tf->tf_regs.reg_ebx,
+				tf->tf_regs.reg_edi,
+				tf->tf_regs.reg_esi);
+			break;
+		default:
+			// Unexpected trap: The user process or the kernel has a bug.
+			print_trapframe(tf);
+			if (tf->tf_cs == GD_KT)
+				panic("unhandled trap in kernel");
+			else {
+				env_destroy(curenv);
+				return;
+			}
+			break;
 	}
 }
 
