@@ -1,5 +1,17 @@
 
 
+## dev tips
+
+- make run-**faultread**-nox
+
+  and the like without changing code in "ENV_CREATE(user_hello, ENV_TYPE_USER);"
+
+- make grade
+
+  not work locally, but you can inspect grade-lab3 by comparing outputs 
+
+
+
 ## answers-lab3
 
 1. What is the purpose of having an individual handler function for each exception/interrupt? (i.e., if all exceptions/interrupts were delivered to the same handler, what feature that exists in the current implementation could not be provided?)
@@ -12,9 +24,9 @@
 
 
 
-## **Exercises**
+## **exercises**
 
-### **Exercise 9**
+### **exercise 9**
 
 If you now run `user/breakpoint`, you should be able to run backtrace from the kernel monitor and see the backtrace traverse into `lib/libmain.c` before the kernel panics with a page fault. What causes this page fault? 
 
@@ -32,28 +44,17 @@ Referenced user empty page, so page faulted
 
 
 
+user env management
+
+user-mode startup
+
+what finally are user/kernel spaces?
+
+interrupt and system call, ring priviledges?
+
 why page fault not allowed in kernel?
 
-breakpoint
+breakpoint implementation
 
 
-
-## skill sets
-
-- make run-**faultread**-nox
-
-  and the like without changing code in "ENV_CREATE(user_hello, ENV_TYPE_USER);"
-  
-- make grade
-
-  not work locally, but you can inspect grade-lab3 by comparing outputs 
-
-**knowledge**:
-
-- BIOS
-- ELF
-- c calling convention: [BUFFER OVERFLOW 6 The Function Stack](https://www.tenouk.com/Bufferoverflowc/Bufferoverflow2a.html)
-- i/o port development: [Chapter 6: Parallel I/O ports](https://users.ece.utexas.edu/~valvano/Volume1/E-Book/C6_MicrocontrollerPorts.htm)
-- makefile
-- C: K & R
 
