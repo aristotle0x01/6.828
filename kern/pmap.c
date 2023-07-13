@@ -603,19 +603,19 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 	char *lower = (char *)ROUNDDOWN(va, PGSIZE);
 	char *upper = (char *)ROUNDUP(((char *)va)+len, PGSIZE);
 	if ((uintptr_t)upper >= ULIM) {
-		user_mem_check_addr = ULIM;
+		user_mem_check_addr = (uintptr_t)va;
 		return -E_FAULT;
 	}
 	for (char *p = lower; p <= upper; p += PGSIZE) {
 		pde_t *pd_entry = &env->env_pgdir[PDX(p)];
 		if (!(*pd_entry & PTE_P) || !(*pd_entry & perm)) {
-			user_mem_check_addr = (uintptr_t)p;
+			user_mem_check_addr = (uintptr_t)va;
 			return -E_FAULT;
 		} 
 		pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
 		pte_t *r = &pt_base[PTX(va)];
 		if (!(*r & PTE_P) || !(*r & perm)) {
-			user_mem_check_addr = (uintptr_t)p;
+			user_mem_check_addr = (uintptr_t)va;
 			return -E_FAULT;
 		} 
 	}

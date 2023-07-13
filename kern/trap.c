@@ -268,14 +268,9 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
-	// if ((tf->tf_cs & 3) == 0) {
-	// 	struct PageInfo* page = page_alloc(ALLOC_ZERO);
-	// 	assert(page);
-	// 	uint32_t va = ROUNDDOWN(fault_va, PGSIZE);
-	// 	int r = page_insert(curenv->env_pgdir, page, (void *)va, PTE_W);
-	// 	assert(r == 0);
-	// 	return;
-	// }
+	if ((tf->tf_cs & 3) == 0) {
+		panic("page fault in kernel va: 0x%08x, ip: 0x%08x\n", fault_va, tf->tf_eip);
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.

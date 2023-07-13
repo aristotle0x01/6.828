@@ -12,6 +12,30 @@
 
 
 
+## **Exercises**
+
+### **Exercise 9**
+
+If you now run `user/breakpoint`, you should be able to run backtrace from the kernel monitor and see the backtrace traverse into `lib/libmain.c` before the kernel panics with a page fault. What causes this page fault? 
+
+<img src="./raw/lab3-1.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+<img src="./raw/lab3-2.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+
+<img src="./raw/lab3-3.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+Referenced user empty page, so page faulted
+
+
+
+
+
+
+
+why page fault not allowed in kernel?
+
+breakpoint
+
 
 
 ## skill sets
