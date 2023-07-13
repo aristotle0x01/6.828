@@ -40,21 +40,83 @@ Referenced user empty page, so page faulted
 
 
 
+## Lab3
+
+### user & kernel spaces
+
+<img src="./raw/lab3-kernel-space.png?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+### interrupt priviledge
+
+#### **interrupt descriptor table (IDT)**
+
+<img src="./raw/lab3-4.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+<img src="./raw/lab3-5.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+
+#### **Interrupt-Handler Procedures**
+
+<img src="./raw/lab3-6.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 
 
+##### privilege-level check
+
+- interrupt vectors have no RPL, the RPL is not checked
+- if interrupt is generated with INT *n*, INT 3, or INTO. then **CPL <= DPL of the interrupt gate** 
+- hardware interrupts and processor-detected exceptions, processor **ignores** the DPL of interrupt gates
+
+
+
+##### stack change
+
+- If handler procedure is to be executed at a numerically lower privilege level, **a stack switch occurs**
+- If handler procedure is to be executed at the same privilege level, no stack switch
+- the processor uses the **`ESP0` and `SS0`** fields of the **TSS** to define the kernel stack when entering kernel mode. JOS doesn't use any other TSS fields
+
+```
+// Task state segment format
+struct Taskstate {
+	uintptr_t ts_esp0;	// Stack pointers and segment selectors
+	uint16_t ts_ss0;	//   after an increase in privilege level
+	...
+	uintptr_t ts_eip;	
+	uint32_t ts_eflags;
+	uint32_t ts_eax;	
+  ...
+	uint16_t ts_es;
+	uint16_t ts_padding4;
+	uint16_t ts_cs;
+	...
+};
+
+```
+
+<img src="./raw/lab3-7.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+##### **trapframe on stack**
+
+<img src="./raw/lab3-8.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+
+
+
+
+
+
+
+hw-cpu alarm
 
 user env management
 
 user-mode startup
 
-what finally are user/kernel spaces?
-
-interrupt and system call, ring priviledges?
-
 why page fault not allowed in kernel?
 
-breakpoint implementation
 
 
+### reference
+
+**xv6** a simple, Unix-like teaching operating system: **Chapter 3 Traps, interrupts, and drivers**
+
+**IA-32 3**: **chapter 5 interrupt and exception handling**
 
