@@ -1,4 +1,4 @@
-## lazy page allocation
+### lazy page allocation
 
 ### phenomena
 
@@ -12,3 +12,8 @@
 
 <img src="./raw/hw-lazy-3.jpg?raw=true" alt="page fault" style="zoom:50%;float: left" />
 
+
+
+### xv6 CPU alarm
+
+<img src="./raw/hw-cpu-alram.png?raw=true" alt="page fault" style="zoom:40%;float: left" />
