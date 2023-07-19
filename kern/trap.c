@@ -65,13 +65,56 @@ static const char *trapname(int trapno)
 	return "(unknown trap)";
 }
 
-
 void
 trap_init(void)
 {
 	extern struct Segdesc gdt[];
 
+	extern void handler0();
+	extern void handler1();
+	extern void handler2();
+	extern void handler3();
+	extern void handler4();
+	extern void handler5();
+	extern void handler6();
+	extern void handler7();
+	extern void handler8();
+	extern void handler10();
+	extern void handler11();
+	extern void handler12();
+	extern void handler13();
+	extern void handler14();
+	extern void handler16();
+	extern void handler17();
+	extern void handler18();
+	extern void handler19();
+	extern void handler48();
+
+	// when you use func in an expression, it is equivalent to using &func, 
+	// which explicitly takes the address of the function. Both func and &func 
+	// will give you the same address of the function in memory.
+	cprintf("  handler address 0x%08x 0x%08x\n", handler0, &handler0);
 	// LAB 3: Your code here.
+	SETGATE(idt[T_DIVIDE], 0, GD_KT, handler0, 0);
+	SETGATE(idt[T_DEBUG], 0, GD_KT, &handler1, 3);
+	SETGATE(idt[T_NMI], 0, GD_KT, handler2, 0);
+	SETGATE(idt[T_BRKPT], 0, GD_KT, handler3, 3);
+	SETGATE(idt[T_OFLOW], 0, GD_KT, handler4, 0);
+	SETGATE(idt[T_BOUND], 0, GD_KT, handler5, 0);
+	SETGATE(idt[T_ILLOP], 0, GD_KT, handler6, 0);
+	SETGATE(idt[T_DEVICE], 0, GD_KT, handler7, 0);
+	SETGATE(idt[T_DBLFLT], 0, GD_KT, handler8, 0);
+	SETGATE(idt[T_TSS], 0, GD_KT, handler10, 0);
+	SETGATE(idt[T_SEGNP], 0, GD_KT, handler11, 0);
+	SETGATE(idt[T_STACK], 0, GD_KT, handler12, 0);
+	SETGATE(idt[T_GPFLT], 0, GD_KT, handler13, 0);
+	SETGATE(idt[T_PGFLT], 0, GD_KT, handler14, 0);
+	SETGATE(idt[T_FPERR], 0, GD_KT, handler16, 0);
+	SETGATE(idt[T_ALIGN], 0, GD_KT, handler17, 0);
+	SETGATE(idt[T_MCHK], 0, GD_KT, handler18, 0);
+	SETGATE(idt[T_SIMDERR], 0, GD_KT, handler19, 0);
+
+	SETGATE(idt[T_SYSCALL], 1, GD_KT, handler48, 3);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -176,27 +219,45 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-
-	// Handle spurious interrupts
-	// The hardware sometimes raises these because of noise on the
-	// IRQ line or other reasons. We don't care.
-	if (tf->tf_trapno == IRQ_OFFSET + IRQ_SPURIOUS) {
-		cprintf("Spurious interrupt on irq 7\n");
-		print_trapframe(tf);
-		return;
-	}
-
+	
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
 
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
+	switch (tf->tf_trapno) {
+		case T_DEBUG:
+		case T_BRKPT:
+			monitor(tf);
+			break;
+		case T_PGFLT:
+			page_fault_handler(tf);
+			break;
+		case T_SYSCALL:
+			tf->tf_regs.reg_eax = syscall(
+				tf->tf_regs.reg_eax,
+				tf->tf_regs.reg_edx,
+				tf->tf_regs.reg_ecx,
+				tf->tf_regs.reg_ebx,
+				tf->tf_regs.reg_edi,
+				tf->tf_regs.reg_esi);
+			break;
+		case (IRQ_OFFSET + IRQ_SPURIOUS):
+			// Handle spurious interrupts
+			// The hardware sometimes raises these because of noise on the
+			// IRQ line or other reasons. We don't care.
+			cprintf("Spurious interrupt on irq 7\n");
+			print_trapframe(tf);
+			break;
+		default:
+			// Unexpected trap: The user process or the kernel has a bug.
+			print_trapframe(tf);
+			if (tf->tf_cs == GD_KT)
+				panic("unhandled trap in kernel");
+			else {
+				env_destroy(curenv);
+				return;
+			}
+			break;
 	}
 }
 
@@ -271,9 +332,20 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
+	if ((tf->tf_cs & 3) == 0) {
+		panic("page fault in kernel va: 0x%08x, ip: 0x%08x\n", fault_va, tf->tf_eip);
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
+	// if ((tf->tf_cs & 3) == 3) {
+	// 	struct PageInfo* page = page_alloc(ALLOC_ZERO);
+	// 	assert(page);
+	// 	uint32_t va = ROUNDDOWN(fault_va, PGSIZE);
+	// 	int r = page_insert(curenv->env_pgdir, page, (void *)va, PTE_U | PTE_W);
+	// 	assert(r == 0);
+	// 	return;
+	// }
 
 	// Call the environment's page fault upcall, if one exists.  Set up a
 	// page fault stack frame on the user exception stack (below

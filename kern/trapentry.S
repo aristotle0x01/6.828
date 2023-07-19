@@ -10,7 +10,6 @@
 ###################################################################
 # exceptions/interrupts
 ###################################################################
-
 /* TRAPHANDLER defines a globally-visible function for handling a trap.
  * It pushes a trap number onto the stack, then jumps to _alltraps.
  * Use TRAPHANDLER for traps where the CPU automatically pushes an error code.
@@ -47,10 +46,48 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-
-
+TRAPHANDLER_NOEC(handler0, T_DIVIDE)
+TRAPHANDLER_NOEC(handler1, T_DEBUG)
+TRAPHANDLER_NOEC(handler2, T_NMI)
+TRAPHANDLER_NOEC(handler3, T_BRKPT)
+TRAPHANDLER_NOEC(handler4, T_OFLOW)
+TRAPHANDLER_NOEC(handler5, T_BOUND)
+TRAPHANDLER_NOEC(handler6, T_ILLOP)
+TRAPHANDLER_NOEC(handler7, T_DEVICE)
+TRAPHANDLER(handler8, T_DBLFLT)
+TRAPHANDLER(handler10, T_TSS)
+TRAPHANDLER(handler11, T_SEGNP)
+TRAPHANDLER(handler12, T_STACK)
+TRAPHANDLER(handler13, T_GPFLT)
+TRAPHANDLER(handler14, T_PGFLT)
+TRAPHANDLER_NOEC(handler16, T_FPERR)
+TRAPHANDLER(handler17, T_ALIGN)
+TRAPHANDLER_NOEC(handler18, T_MCHK)
+TRAPHANDLER_NOEC(handler19, T_SIMDERR)
+TRAPHANDLER_NOEC(handler48, T_SYSCALL)
 
 /*
  * Lab 3: Your code here for _alltraps
  */
+.globl _alltraps
+_alltraps:
+    /* don't be influnced by xv6 to push %gs and %fs, which are not defined 
+	 * here in jos Trapframe
+	 */
+	pushl %ds
+	pushl %es
+	pushal
 
+	movw $GD_KD, %ax
+	movw %ax, %ds
+	movw %ax, %es
+
+	pushl %esp
+	call trap
+	addl $4, %esp
+
+	popal
+	popl %es
+	popl %ds
+	addl $8, %esp
+	iret

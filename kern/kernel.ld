@@ -51,10 +51,14 @@ SECTIONS
 		PROVIDE(edata = .);
 		*(.dynbss)
 		*(.bss .bss.*)
+		/* 
+		   kernel panic at kern/pmap.c:148: PADDR called with invalid kva 00000000:
+		   https://qiita.com/kagurazakakotori/items/334ab87a6eeb76711936 
+		   *(COMMON): Specify where in your output file to place uninitialized data with this notation
+		*/
 		*(COMMON)
 		PROVIDE(end = .);
 	}
-
 
 	/DISCARD/ : {
 		*(.eh_frame .note.GNU-stack .comment .note)
