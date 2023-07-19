@@ -117,11 +117,26 @@ wakeup(void *chan)
 
 
 
+## **exercises**
+
+### **Exercise 2**
+
+**Question**: the purpose of macro `MPBOOTPHYS` is to calculate the actual physical address, because kern/mpentry.S already linked above KERNBASE. It could go wrong if RELOC were omitted in `kern/mpentry.S`
+
+- **link address**:  where in virtual space it would reside
+- **load address**: where in physical space it would be loaded
+
+
+
 ## reference
 
 **xv6** a simple, Unix-like teaching operating system: **Chapter 4/5 Locking/Scheduling**
 
+**CHAPTER 8 ADVANCED PROGRAMMABLE INTERRUPT CONTROLLER (APIC)**
 
+intel volume 3:  8.4 **LOCAL APIC**
+
+**16.2.8.2.**
 
 
 

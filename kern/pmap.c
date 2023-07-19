@@ -350,7 +350,7 @@ page_init(void)
 
 	size_t i;
 	for (i = 0; i < npages; i++) {
-		if (0 == i) {
+		if (0 == i || i == (MPENTRY_PADDR/PGSIZE)) {
 			continue;
 		}
 		if (i >= (IOPHYSMEM/PGSIZE) && i < nf_page_num) {
@@ -642,7 +642,18 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	// panic("mmio_map_region not implemented");
+	physaddr_t rpa = ROUNDDOWN(pa, PGSIZE);
+	size_t rsize = ROUNDUP(size, PGSIZE);
+	if ((base+rsize) >= MMIOLIM) {
+		panic("mmio_map_region overflow %d >= MMIOLIM", base+rsize);
+	}
+	boot_map_region(kern_pgdir, base, rsize, rpa, PTE_PCD|PTE_PWT|PTE_W);
+	
+	void *r = (void *)base;
+	base += rsize;
+
+	return r;
 }
 
 static uintptr_t user_mem_check_addr;
