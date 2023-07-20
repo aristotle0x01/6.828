@@ -128,6 +128,16 @@ wakeup(void *chan)
 
 
 
+### **Exercise 3**&4
+
+is phy = PADDR(bootstack) still needed after adding mem_init_mp?
+
+Ans: no, since in mem_init_mp its mapping will be removed by page_insert
+
+<img src="./raw/lab4-stack-overview.png?raw=true" alt="ssh_port" style="zoom:100%; float:left" />
+
+
+
 ## reference
 
 **xv6** a simple, Unix-like teaching operating system: **Chapter 4/5 Locking/Scheduling**

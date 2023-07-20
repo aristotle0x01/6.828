@@ -220,12 +220,8 @@ mem_init(void)
 	//       overwrite memory.  Known as a "guard page".
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
-    phy = PADDR(bootstack);
-	for (uint32_t v = KSTACKTOP-KSTKSIZE; v < KSTACKTOP; v += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(kern_pgdir, page, (void *)v, PTE_W | PTE_P);
-		phy += PGSIZE;
-	}
+	// this mapping will soon be redone in mem_init_mp, in which bootstack 
+	// will be removed by page_insert 
 
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
@@ -300,7 +296,15 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+	for (int i=0; i<NCPU; i++) {
+		physaddr_t phy = PADDR(percpu_kstacks[i]);
+		uint32_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+		for (uint32_t v = kstacktop_i-KSTKSIZE; v < kstacktop_i; v += PGSIZE) {
+			struct PageInfo *page = pa2page(phy);
+			page_insert(kern_pgdir, page, (void *)v, PTE_W | PTE_P);
+			phy += PGSIZE;
+		}
+	}
 }
 
 // --------------------------------------------------------------
