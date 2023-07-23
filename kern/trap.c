@@ -93,7 +93,8 @@ trap_init(void)
 	// when you use func in an expression, it is equivalent to using &func, 
 	// which explicitly takes the address of the function. Both func and &func 
 	// will give you the same address of the function in memory.
-	cprintf("  handler address 0x%08x 0x%08x\n", handler0, &handler0);
+	// cprintf("  handler address 0x%08x 0x%08x\n", handler0, &handler0);
+
 	// LAB 3: Your code here.
 	SETGATE(idt[T_DIVIDE], 0, GD_KT, handler0, 0);
 	SETGATE(idt[T_DEBUG], 0, GD_KT, &handler1, 3);
@@ -386,4 +387,3 @@ page_fault_handler(struct Trapframe *tf)
 	print_trapframe(tf);
 	env_destroy(curenv);
 }
-

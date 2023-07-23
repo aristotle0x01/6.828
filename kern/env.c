@@ -192,30 +192,24 @@ env_setup_vm(struct Env *e)
 	// LAB 3: Your code here.
 	p->pp_ref++;
 	e->env_pgdir = page2kva(p);
-	// --------UENVS(UTOP)
-	uint32_t upper = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
-	physaddr_t phy = PADDR(envs);
-	for (i = 0; i < upper; i += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(e->env_pgdir, page, (void *)(UENVS + i), PTE_U | PTE_P);
-		phy += PGSIZE;
-	}
 	// --------UPAGES
-	upper = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
-	phy = PADDR(pages);
+	uint32_t upper = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
+	physaddr_t phy = PADDR(pages);
 	for (i = 0; i < upper; i += PGSIZE) {
 		struct PageInfo *page = pa2page(phy);
 		page_insert(e->env_pgdir, page, (void *)(UPAGES + i), PTE_U | PTE_P);
 		phy += PGSIZE;
 	}
-	// --------kernel stack
-	extern char bootstack[];
-	phy = PADDR(bootstack);
-	for (uint32_t v = KSTACKTOP-KSTKSIZE; v < KSTACKTOP; v += PGSIZE) {
+
+	// --------UENVS(UTOP)
+	upper = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
+	phy = PADDR(envs);
+	for (i = 0; i < upper; i += PGSIZE) {
 		struct PageInfo *page = pa2page(phy);
-		page_insert(e->env_pgdir, page, (void *)v, PTE_W | PTE_P);
+		page_insert(e->env_pgdir, page, (void *)(UENVS + i), PTE_U | PTE_P);
 		phy += PGSIZE;
 	}
+	
 	// --------Map memory above KERNBASE
 	i = 0;
 	uint32_t v = KERNBASE;
@@ -229,6 +223,22 @@ env_setup_vm(struct Env *e)
 	while (i < NPDENTRIES) {
 		e->env_pgdir[i] = (e->env_pgdir[i] & ~0xfff) | PTE_W | PTE_P;
 		i++;
+	}
+
+	// **** without this mapping there would be kernel page fault ****
+	// yet up until lab4:Exercise 6 it seems nowhere has mentioned this, a bug maybe
+	uintptr_t limit = (uintptr_t)mmio_map_region(0, 0);
+	boot_map_region(e->env_pgdir, MMIOBASE, limit-MMIOBASE, ROUNDDOWN(lapicaddr, PGSIZE), PTE_PCD|PTE_PWT|PTE_W);
+
+	// --------kernel stack
+	for (int i=0; i<NCPU; i++) {
+		physaddr_t phy = PADDR(percpu_kstacks[i]);
+		uint32_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+		for (uint32_t v = kstacktop_i-KSTKSIZE; v < kstacktop_i; v += PGSIZE) {
+			struct PageInfo *page = pa2page(phy);
+			page_insert(e->env_pgdir, page, (void *)v, PTE_W | PTE_P);
+			phy += PGSIZE;
+		}
 	}
 
 	// UVPT maps the env's own page table read-only.
@@ -590,11 +600,12 @@ env_run(struct Env *e)
 		curenv->env_status = ENV_RUNNING;
 		curenv->env_runs++;
 
-		lcr3(PADDR(curenv->env_pgdir));
+		unlock_kernel();
+		lcr3(PADDR(e->env_pgdir));
+	} else {
+		unlock_kernel();
 	}
-	
-	unlock_kernel();
-	
-	env_pop_tf(&(curenv->env_tf));
+
+	env_pop_tf(&(e->env_tf));
 }
 
