@@ -136,6 +136,52 @@ Ans: no, since in mem_init_mp its mapping will be removed by page_insert
 
 <img src="./raw/lab4-stack-overview.png?raw=true" alt="ssh_port" style="zoom:100%; float:left" />
 
+### **Exercise 7**
+
+user/dumbfork.c is pretty interesting:
+
+a. **parent and child both mapped to the same physical page, thus memmove executed in parent actually effected mem in child**
+
+```
+void
+duppage(envid_t dstenv, void *addr)
+{
+	int r;
+
+	// This is NOT what you should do in your fork.
+	if ((r = sys_page_alloc(dstenv, addr, PTE_P|PTE_U|PTE_W)) < 0)
+		panic("sys_page_alloc: %e", r);
+	if ((r = sys_page_map(dstenv, addr, 0, UTEMP, PTE_P|PTE_U|PTE_W)) < 0)
+		panic("sys_page_map: %e", r);
+	memmove(UTEMP, addr, PGSIZE);
+	if ((r = sys_page_unmap(0, UTEMP)) < 0)
+		panic("sys_page_unmap: %e", r);
+}
+```
+
+b. `duppage(envid, ROUNDDOWN(&addr, PGSIZE))` seems like xv6 user stack; while`duppage(envid, (void *)(USTACKTOP-PGSIZE))` use jos user stack. actually they are the same, since <u>addr</u> is a local var, then <u>&addr</u> will be its address, which is the stack memory address, further `ROUNDDOWN(&addr, PGSIZE)` would be equal to `(USTACKTOP-PGSIZE)`
+
+<img src="./raw/xv6-user-stack.jpg?raw=true" alt="ssh_port" style="zoom:50%; float:left" />
+
+<img src="./raw/jos-user-stack.jpg?raw=true" alt="ssh_port" style="zoom:35%; float:left" />
+
+```
+envid_t
+dumbfork(void)
+{
+	envid_t envid;
+	uint8_t *addr;
+	int r;
+	extern unsigned char end[];
+	...
+	// Also copy the stack we are currently running on.
+	// duppage(envid, ROUNDDOWN(&addr, PGSIZE));
+	cprintf("stack %08x %08x %08x %08x\n", ROUNDDOWN(&addr, PGSIZE), USTACKTOP-PGSIZE, addr, end);
+	duppage(envid, (void *)(USTACKTOP-PGSIZE));
+	...
+}
+```
+
 
 
 ## reference
