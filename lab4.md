@@ -161,9 +161,9 @@ duppage(envid_t dstenv, void *addr)
 
 b. `duppage(envid, ROUNDDOWN(&addr, PGSIZE))` seems like xv6 user stack; while`duppage(envid, (void *)(USTACKTOP-PGSIZE))` use jos user stack. actually they are the same, since <u>addr</u> is a local var, then <u>&addr</u> will be its address, which is the stack memory address, further `ROUNDDOWN(&addr, PGSIZE)` would be equal to `(USTACKTOP-PGSIZE)`
 
-<img src="./raw/xv6-user-stack.jpg?raw=true" alt="ssh_port" style="zoom:50%; float:left" />
+<img src="./raw/xv6-user-stack.jpg?raw=true" alt="xv6" style="zoom:50%; float:left" />
 
-<img src="./raw/jos-user-stack.jpg?raw=true" alt="ssh_port" style="zoom:35%; float:left" />
+<img src="./raw/jos-user-stack.jpg?raw=true" alt="jos" style="zoom:35%; float:left" />
 
 ```
 envid_t
@@ -181,6 +181,18 @@ dumbfork(void)
 	...
 }
 ```
+
+
+
+### **Exercise 8,9,10,11**
+
+relations of set_pgfault_handler and sys_env_set_pgfault_upcall, kind of opaque
+
+implementation of user space page fault handling
+
+why a blank word on the user exception stack?
+
+
 
 
 

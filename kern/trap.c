@@ -341,14 +341,6 @@ page_fault_handler(struct Trapframe *tf)
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
-	// if ((tf->tf_cs & 3) == 3) {
-	// 	struct PageInfo* page = page_alloc(ALLOC_ZERO);
-	// 	assert(page);
-	// 	uint32_t va = ROUNDDOWN(fault_va, PGSIZE);
-	// 	int r = page_insert(curenv->env_pgdir, page, (void *)va, PTE_U | PTE_W);
-	// 	assert(r == 0);
-	// 	return;
-	// }
 
 	// Call the environment's page fault upcall, if one exists.  Set up a
 	// page fault stack frame on the user exception stack (below
@@ -380,7 +372,39 @@ page_fault_handler(struct Trapframe *tf)
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
 	// LAB 4: Your code here.
+	if (!curenv->env_pgfault_upcall) {
+		goto to_history_bin_you_go;
+	}
+	uintptr_t tf_esp = curenv->env_tf.tf_esp;
+	// exception stack top
+	uintptr_t excp_esp;
+	// already on user exception stack
+	if (tf_esp >= (UXSTACKTOP-PGSIZE) && tf_esp <= (UXSTACKTOP-1)) {
+		excp_esp = tf_esp;
+		excp_esp -= 4;
+		*((uintptr_t *)excp_esp) = 0;
+	} else {
+		excp_esp = UXSTACKTOP-1;
+	}
 
+	// added after testing faultnostack
+	user_mem_assert(curenv, (void *)excp_esp, sizeof(struct UTrapframe), PTE_P|PTE_U|PTE_W);
+
+	excp_esp -= sizeof(struct UTrapframe);
+	struct UTrapframe *utf = (struct UTrapframe *)excp_esp;
+	utf->utf_fault_va = fault_va;
+	utf->utf_err = tf->tf_err;
+	utf->utf_regs = tf->tf_regs;
+	utf->utf_eip = tf->tf_eip;
+	utf->utf_eflags = tf->tf_eflags;
+	utf->utf_esp = tf->tf_esp;
+	
+	tf->tf_eip = (uintptr_t)(curenv->env_pgfault_upcall);
+	tf->tf_esp = excp_esp;
+	env_run(curenv);
+	return;
+	
+to_history_bin_you_go:
 	// Destroy the environment that caused the fault.
 	cprintf("[%08x] user fault va %08x ip %08x\n",
 		curenv->env_id, fault_va, tf->tf_eip);

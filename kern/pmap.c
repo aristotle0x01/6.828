@@ -694,16 +694,18 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 		user_mem_check_addr = (uintptr_t)va;
 		return -E_FAULT;
 	}
-	for (char *p = lower; p <= upper; p += PGSIZE) {
+	for (char *p = lower; p < upper; p += PGSIZE) {
 		pde_t *pd_entry = &env->env_pgdir[PDX(p)];
 		if (!(*pd_entry & PTE_P) || !(*pd_entry & perm)) {
 			user_mem_check_addr = (uintptr_t)va;
+			cprintf("assertion failure for1 %08x, %08x, %08x\n", p, upper, pd_entry);
 			return -E_FAULT;
 		} 
 		pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
-		pte_t *r = &pt_base[PTX(va)];
+		pte_t *r = &pt_base[PTX(p)];
 		if (!(*r & PTE_P) || !(*r & perm)) {
 			user_mem_check_addr = (uintptr_t)va;
+			cprintf("assertion failure for2 %08x, %08x, %08x\n", p, upper, r);
 			return -E_FAULT;
 		} 
 	}
@@ -723,7 +725,7 @@ user_mem_assert(struct Env *env, const void *va, size_t len, int perm)
 {
 	if (user_mem_check(env, va, len, perm | PTE_U) < 0) {
 		cprintf("[%08x] user_mem_check assertion failure for "
-			"va %08x\n", env->env_id, user_mem_check_addr);
+			"va %08x len %d perm %d\n", env->env_id, user_mem_check_addr, len, perm);
 		env_destroy(env);	// may not return
 	}
 }
