@@ -25,6 +25,9 @@ pgfault(struct UTrapframe *utf)
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
+	if (!((err & FEC_WR) && (uvpt[PGNUM(addr)] & PTE_COW))) {
+		panic("[%08x] not a write err %d, or copy-on-write %08x\n", thisenv->env_id, err, addr);
+	}
 
 	// Allocate a new page, map it at a temporary location (PFTEMP),
 	// copy the data from the old page to the new page, then move the new
@@ -33,8 +36,17 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
+	if ((r = sys_page_alloc(0, (void *)PFTEMP, PTE_P|PTE_U|PTE_W)) < 0){
+		panic("pgfault sys_page_alloc: %e", r);
+	}
+	memmove(PFTEMP, ROUNDDOWN(addr, PGSIZE), PGSIZE);
 
-	panic("pgfault not implemented");
+	if ((r = sys_page_map(0, PFTEMP, 0, ROUNDDOWN(addr, PGSIZE), PTE_P|PTE_U|PTE_W)) < 0){
+		panic("pgfault sys_page_map: %e", r);
+	}
+	if ((r = sys_page_unmap(0, PFTEMP)) < 0){
+		panic("pgfault sys_page_unmap: %e", r);
+	}
 }
 
 //
@@ -51,10 +63,18 @@ pgfault(struct UTrapframe *utf)
 static int
 duppage(envid_t envid, unsigned pn)
 {
-	int r;
-
 	// LAB 4: Your code here.
-	panic("duppage not implemented");
+	int perm = PTE_COW|PTE_U|PTE_P;
+	void *va = (void *)(pn*PGSIZE);
+
+	int r;
+	if ((r = sys_page_map(thisenv->env_id, va, envid, va, perm))) {
+		panic("duppage sys_page_map error %e\n", r);
+	}
+	if ((r = sys_page_map(thisenv->env_id, va, thisenv->env_id, va, perm))) {
+		panic("duppage sys_page_map error old %e\n", r);
+	}
+
 	return 0;
 }
 
@@ -78,7 +98,58 @@ envid_t
 fork(void)
 {
 	// LAB 4: Your code here.
-	panic("fork not implemented");
+	set_pgfault_handler(pgfault);
+
+	envid_t evnid = sys_exofork();
+	if (evnid < 0) {
+		panic("user fork error %e\n", evnid);
+	} 
+	if (evnid == 0) {
+		// child
+		thisenv = &envs[ENVX(sys_getenvid())];
+		return evnid;
+	}
+
+	void *va;
+	int pn, r;
+	for (int di=0; di < PDX(UTOP); di++) {
+		pde_t pde_entry = uvpd[di];
+		if (!(pde_entry & PTE_P)) {
+			continue;
+		}
+
+		for (int ti=0; ti<NPTENTRIES; ti++) {
+			pn = (di << 10) | ti;
+			if (pn == PGNUM(UXSTACKTOP-PGSIZE)) {
+				continue;
+			}
+
+			pte_t pte = uvpt[pn];
+			if (!(pte & PTE_P)) {
+				continue;
+			}
+			if ((pte & PTE_W) || (pte & PTE_COW)) {
+				duppage(evnid, pn);
+				continue;
+			}
+			
+			va = (void *)(pn*PGSIZE);
+			if ((r = sys_page_map(thisenv->env_id, va, evnid, va, pte & 0xfff))) {
+				panic("user fork sys_page_map error %e\n", r);
+			}
+		}
+	}
+
+	if ((r = sys_page_alloc(evnid, (void *)(UXSTACKTOP-PGSIZE), PTE_P | PTE_U | PTE_W))) {
+		panic("user fork sys_page_alloc error %e\n", r);
+	}
+	if ((r = sys_env_set_pgfault_upcall(evnid, (void *)(thisenv->env_pgfault_upcall)))) {
+		panic("user fork upcall error %e\n", r);
+	}
+	if ((r = sys_env_set_status(evnid, ENV_RUNNABLE))) {
+		panic("user fork status error %e\n", r);
+	}
+	return evnid;
 }
 
 // Challenge!

@@ -194,6 +194,18 @@ why a blank word on the user exception stack?
 
 
 
+### Exercise 12
+
+how to interpret uvpt and uvpd?
+
+implementation of copy-on-write
+
+
+
+
+
+
+
 
 
 ## reference
