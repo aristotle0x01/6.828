@@ -88,7 +88,24 @@ trap_init(void)
 	extern void handler17();
 	extern void handler18();
 	extern void handler19();
+	extern void handler32();
+	extern void handler33();
+	extern void handler34();
+	extern void handler35();
+	extern void handler36();
+	extern void handler37();
+	extern void handler38();
+	extern void handler39();
+	extern void handler40();
+	extern void handler41();
+	extern void handler42();
+	extern void handler43();
+	extern void handler44();
+	extern void handler45();
+	extern void handler46();
+	extern void handler47();
 	extern void handler48();
+	extern void handler51();
 
 	// when you use func in an expression, it is equivalent to using &func, 
 	// which explicitly takes the address of the function. Both func and &func 
@@ -114,6 +131,23 @@ trap_init(void)
 	SETGATE(idt[T_ALIGN], 0, GD_KT, handler17, 0);
 	SETGATE(idt[T_MCHK], 0, GD_KT, handler18, 0);
 	SETGATE(idt[T_SIMDERR], 0, GD_KT, handler19, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_TIMER], 0, GD_KT, handler32, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_KBD], 0, GD_KT, handler33, 0);
+	SETGATE(idt[IRQ_OFFSET+2], 0, GD_KT, handler34, 0);
+	SETGATE(idt[IRQ_OFFSET+3], 0, GD_KT, handler35, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_SERIAL], 0, GD_KT, handler36, 0);
+	SETGATE(idt[IRQ_OFFSET+5], 0, GD_KT, handler37, 0);
+	SETGATE(idt[IRQ_OFFSET+6], 0, GD_KT, handler38, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_SPURIOUS], 0, GD_KT, handler39, 0);
+	SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, handler40, 0);
+	SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, handler41, 0);
+	SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, handler42, 0);
+	SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, handler43, 0);
+	SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, handler44, 0);
+	SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, handler45, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_IDE], 0, GD_KT, handler46, 0);
+	SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, handler47, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_ERROR], 0, GD_KT, handler51, 0);
 
 	SETGATE(idt[T_SYSCALL], 1, GD_KT, handler48, 3);
 
@@ -149,7 +183,7 @@ trap_init_percpu(void)
 	// user space on that CPU.
 	//
 	// LAB 4: Your code here:
-	int cpu_id = cpunum();
+	int cpu_id = thiscpu->cpu_id;
 
 	// Setup a TSS so that we get the right stack
 	// when we trap to the kernel.
@@ -159,7 +193,7 @@ trap_init_percpu(void)
 
 	// Initialize the TSS slot of the gdt.
 	gdt[(GD_TSS0 >> 3) + cpu_id] = SEG16(STS_T32A, (uint32_t) (&(thiscpu->cpu_ts)),
-					sizeof(struct Taskstate) - 1, 0);
+					sizeof(struct Taskstate)-1, 0);
 	gdt[(GD_TSS0 >> 3) + cpu_id].sd_s = 0;
 
 	// Load the TSS selector (like other segment selectors, the
@@ -243,12 +277,53 @@ trap_dispatch(struct Trapframe *tf)
 				tf->tf_regs.reg_edi,
 				tf->tf_regs.reg_esi);
 			break;
+		case (IRQ_OFFSET + IRQ_TIMER):
+			lapic_eoi();
+			timer_handler(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_KBD):
+			lapic_eoi();
+			cprintf("KBD interrupt on irq 1\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_SERIAL):
+			lapic_eoi();
+			cprintf("Serial interrupt on irq 4\n");
+			print_trapframe(tf);
+			break;
 		case (IRQ_OFFSET + IRQ_SPURIOUS):
+			lapic_eoi();
 			// Handle spurious interrupts
 			// The hardware sometimes raises these because of noise on the
 			// IRQ line or other reasons. We don't care.
 			cprintf("Spurious interrupt on irq 7\n");
 			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_IDE):
+			lapic_eoi();
+			cprintf("IDE interrupt on irq 14\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + 2):
+		case (IRQ_OFFSET + 3):
+		case (IRQ_OFFSET + 5):
+		case (IRQ_OFFSET + 6):
+		case (IRQ_OFFSET + 8):
+		case (IRQ_OFFSET + 9):
+		case (IRQ_OFFSET + 10):
+		case (IRQ_OFFSET + 11):
+		case (IRQ_OFFSET + 12):
+		case (IRQ_OFFSET + 13):
+		case (IRQ_OFFSET + 15):
+		case (IRQ_OFFSET + IRQ_ERROR):
+			lapic_eoi();
+			print_trapframe(tf);
+			if (tf->tf_cs == GD_KT)
+				panic("unhandled trap in kernel");
+			else {
+				env_destroy(curenv);
+				return;
+			}
 			break;
 		default:
 			// Unexpected trap: The user process or the kernel has a bug.
@@ -266,6 +341,8 @@ trap_dispatch(struct Trapframe *tf)
 void
 trap(struct Trapframe *tf)
 {
+	// write_eflags(read_eflags() & ~FL_IF);
+
 	// The environment may have set DF and some versions
 	// of GCC rely on DF being clear
 	asm volatile("cld" ::: "cc");
@@ -285,6 +362,8 @@ trap(struct Trapframe *tf)
 	assert(!(read_eflags() & FL_IF));
 
 	if ((tf->tf_cs & 3) == 3) {
+		assert(tf->tf_eflags & FL_IF);
+
 		// Trapped from user mode.
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
@@ -322,7 +401,6 @@ trap(struct Trapframe *tf)
 	else
 		sched_yield();
 }
-
 
 void
 page_fault_handler(struct Trapframe *tf)
@@ -410,4 +488,26 @@ to_history_bin_you_go:
 		curenv->env_id, fault_va, tf->tf_eip);
 	print_trapframe(tf);
 	env_destroy(curenv);
+}
+
+void
+timer_handler(struct Trapframe *tf) {
+	cprintf("[%08x] timer interrupt on irq 0\n", curenv ? curenv->env_id:0);
+	// print_trapframe(curenv ? &curenv->env_tf : tf);
+	sched_yield();
+}
+
+void
+kbd_handler(struct Trapframe *tf) {
+
+}
+
+void
+serial_handler(struct Trapframe *tf) {
+
+}
+
+void
+ide_handler(struct Trapframe *tf) {
+
 }

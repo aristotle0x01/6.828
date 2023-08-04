@@ -68,13 +68,20 @@ duppage(envid_t envid, unsigned pn)
 	void *va = (void *)(pn*PGSIZE);
 
 	int r;
-	if ((r = sys_page_map(thisenv->env_id, va, envid, va, perm))) {
+	pte_t pte = uvpt[pn];
+	if ((pte & PTE_W) || (pte & PTE_COW)) {
+		if ((r = sys_page_map(0, va, envid, va, perm))) {
 		panic("duppage sys_page_map error %e\n", r);
+		}
+		if ((r = sys_page_map(0, va, 0, va, perm))) {
+			panic("duppage sys_page_map error old %e\n", r);
+		}
+	} else {
+		if ((r = sys_page_map(0, va, envid, va, pte & 0xfff))) {
+			panic("duppage sys_page_map error %e\n", r);
+		}
 	}
-	if ((r = sys_page_map(thisenv->env_id, va, thisenv->env_id, va, perm))) {
-		panic("duppage sys_page_map error old %e\n", r);
-	}
-
+	
 	return 0;
 }
 
@@ -124,19 +131,11 @@ fork(void)
 				continue;
 			}
 
-			pte_t pte = uvpt[pn];
-			if (!(pte & PTE_P)) {
+			if (!(uvpt[pn] & PTE_P)) {
 				continue;
 			}
-			if ((pte & PTE_W) || (pte & PTE_COW)) {
-				duppage(evnid, pn);
-				continue;
-			}
-			
-			va = (void *)(pn*PGSIZE);
-			if ((r = sys_page_map(thisenv->env_id, va, evnid, va, pte & 0xfff))) {
-				panic("user fork sys_page_map error %e\n", r);
-			}
+
+			duppage(evnid, pn);
 		}
 	}
 

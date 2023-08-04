@@ -30,18 +30,18 @@ sched_yield(void)
 
 	// LAB 4: Your code here.
 	int index = 0;
-	if (thiscpu->cpu_env != NULL) {
-		index = ENVX(thiscpu->cpu_env->env_id) + 1;
+	if (curenv) {
+		index = ENVX(curenv->env_id) + 1;
 	}
 
-	struct Env *e = NULL;
+	struct Env *e=NULL;
 	for (int i=index; i<NENV; i++) {
 		if (envs[i].env_status == ENV_RUNNABLE) {
 			e = &envs[i];
 			break;
 		}
 	}
-	for (int i=0; (i<index) && (e==NULL); i++) {
+	for (int i=0; (i<index) && !e; i++) {
 		if (envs[i].env_status == ENV_RUNNABLE) {
 			e = &envs[i];
 			break;
@@ -50,14 +50,16 @@ sched_yield(void)
 	
 	if (e) {
 		// never return
+		cprintf("[%08x] will run!\n", e->env_id);
 		env_run(e);
-	} else {
-		if (thiscpu->cpu_env && thiscpu->cpu_env->env_status == ENV_RUNNING) {
-			env_run(thiscpu->cpu_env);
-		}
+	} 
+	if (curenv && curenv->env_status == ENV_RUNNING) {
+		cprintf("[%08x] will continue run!\n", curenv->env_id);
+		env_run(curenv);
 	}
 	
 	// sched_halt never returns
+	cprintf("sched_halt\n");
 	sched_halt();
 }
 
@@ -102,7 +104,7 @@ sched_halt(void)
 		"pushl $0\n"
 		"pushl $0\n"
 		// Uncomment the following line after completing exercise 13
-		//"sti\n"
+		"sti\n"
 		"1:\n"
 		"hlt\n"
 		"jmp 1b\n"
