@@ -192,54 +192,7 @@ env_setup_vm(struct Env *e)
 	// LAB 3: Your code here.
 	p->pp_ref++;
 	e->env_pgdir = page2kva(p);
-	// --------UPAGES
-	uint32_t upper = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
-	physaddr_t phy = PADDR(pages);
-	for (i = 0; i < upper; i += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(e->env_pgdir, page, (void *)(UPAGES + i), PTE_U | PTE_P);
-		phy += PGSIZE;
-	}
-
-	// --------UENVS(UTOP)
-	upper = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
-	phy = PADDR(envs);
-	for (i = 0; i < upper; i += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(e->env_pgdir, page, (void *)(UENVS + i), PTE_U | PTE_P);
-		phy += PGSIZE;
-	}
-	
-	// --------Map memory above KERNBASE
-	i = 0;
-	uint32_t v = KERNBASE;
-	while (i < npages) {
-		struct PageInfo *page = pa2page(PADDR((void *)v));
-		page_insert(e->env_pgdir, page, (void *)v, PTE_W | PTE_P);
-		v += PGSIZE;
-		i++;
-	}
-	i = PDX(KERNBASE);
-	while (i < NPDENTRIES) {
-		e->env_pgdir[i] = (e->env_pgdir[i] & ~0xfff) | PTE_W | PTE_P;
-		i++;
-	}
-
-	// **** without this mapping there would be kernel page fault ****
-	// yet up until lab4:Exercise 6 it seems nowhere has mentioned this, a bug maybe
-	uintptr_t limit = (uintptr_t)mmio_map_region(0, 0);
-	boot_map_region(e->env_pgdir, MMIOBASE, limit-MMIOBASE, ROUNDDOWN(lapicaddr, PGSIZE), PTE_PCD|PTE_PWT|PTE_W);
-
-	// --------kernel stack
-	for (int i=0; i<NCPU; i++) {
-		physaddr_t phy = PADDR(percpu_kstacks[i]);
-		uint32_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
-		for (uint32_t v = kstacktop_i-KSTKSIZE; v < kstacktop_i; v += PGSIZE) {
-			struct PageInfo *page = pa2page(phy);
-			page_insert(e->env_pgdir, page, (void *)v, PTE_W | PTE_P);
-			phy += PGSIZE;
-		}
-	}
+	memcpy(e->env_pgdir, kern_pgdir, PGSIZE);
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
