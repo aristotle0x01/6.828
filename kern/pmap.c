@@ -186,13 +186,7 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-	uint32_t upper = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
-	physaddr_t phy = PADDR(pages);
-	for (uint32_t i = 0; i < upper; i += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(kern_pgdir, page, (void *)(UPAGES + i), PTE_U | PTE_P);
-		phy += PGSIZE;
-	}
+	boot_map_region(kern_pgdir, UPAGES, PTSIZE, PADDR(pages), PTE_U | PTE_P);
 	
 	//////////////////////////////////////////////////////////////////////
 	// Map the 'envs' array read-only by the user at linear address UENVS
@@ -201,13 +195,7 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
-	upper = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
-	phy = PADDR(envs);
-	for (uint32_t i = 0; i < upper; i += PGSIZE) {
-		struct PageInfo *page = pa2page(phy);
-		page_insert(kern_pgdir, page, (void *)(UENVS + i), PTE_U | PTE_P);
-		phy += PGSIZE;
-	}
+	boot_map_region(kern_pgdir, UENVS, PTSIZE, PADDR(envs), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -232,19 +220,7 @@ mem_init(void)
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
 	// only insert up to npages, for the left just set page dir
-	uint32_t i = 0;
-	uint32_t v = KERNBASE;
-	while (i < npages) {
-		struct PageInfo *page = pa2page(PADDR((void *)v));
-		page_insert(kern_pgdir, page, (void *)v, PTE_W | PTE_P);
-		v += PGSIZE;
-		i++;
-	}
-	i = PDX(KERNBASE);
-	while (i < NPDENTRIES) {
-		kern_pgdir[i] = (kern_pgdir[i] & ~0xfff) | PTE_W | PTE_P;
-		i++;
-	}
+	boot_map_region(kern_pgdir, KERNBASE, (uint32_t)(0xffffffff-KERNBASE+1), 0, PTE_W | PTE_P);
 
 	// Initialize the SMP-related parts of the memory map
 	mem_init_mp();
@@ -297,13 +273,11 @@ mem_init_mp(void)
 	//
 	// LAB 4: Your code here:
 	for (int i=0; i<NCPU; i++) {
-		physaddr_t phy = PADDR(percpu_kstacks[i]);
-		uint32_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
-		for (uint32_t v = kstacktop_i-KSTKSIZE; v < kstacktop_i; v += PGSIZE) {
-			struct PageInfo *page = pa2page(phy);
-			page_insert(kern_pgdir, page, (void *)v, PTE_W | PTE_P);
-			phy += PGSIZE;
-		}
+		boot_map_region(kern_pgdir, 
+			KSTACKTOP - KSTKSIZE - i * (KSTKSIZE + KSTKGAP), 
+			KSTKSIZE, 
+			PADDR(percpu_kstacks[i]), 
+			PTE_W | PTE_P);
 	}
 }
 
