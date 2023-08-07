@@ -106,9 +106,7 @@ boot_alloc(uint32_t n)
 	//
 	// LAB 2: Your code here.
 	result = nextfree;
-	if (n > 0) {
-		nextfree = ROUNDUP(nextfree+n, PGSIZE);
-	}
+	nextfree = ROUNDUP(nextfree+n, PGSIZE);
 
 	return result;
 }
@@ -210,6 +208,7 @@ mem_init(void)
 	// Your code goes here:
 	// this mapping will soon be redone in mem_init_mp, in which bootstack 
 	// will be removed by page_insert 
+	boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W);
 
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
@@ -317,21 +316,19 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
-	void* nextfree = boot_alloc(0);
 	// [IOPHYSMEM -> EXTPHYSMEM -> END -> nextfree) is already occupied
-	uint32_t nf_page_num;
-	if ((PADDR(nextfree) % PGSIZE) == 0){
-		nf_page_num = PADDR(nextfree) / PGSIZE;
-	} else {
-		nf_page_num = PADDR(nextfree) / PGSIZE + 1;
-	}
+	uint32_t nf_page_num = PADDR(boot_alloc(0)) / PGSIZE;
 
 	size_t i;
 	for (i = 0; i < npages; i++) {
 		if (0 == i || i == (MPENTRY_PADDR/PGSIZE)) {
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
 			continue;
 		}
 		if (i >= (IOPHYSMEM/PGSIZE) && i < nf_page_num) {
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
 			continue;
 		}
 
@@ -367,7 +364,7 @@ page_alloc(int alloc_flags)
 	page->pp_ref = 0;
 	if (alloc_flags & ALLOC_ZERO) {
 		// page is just a pointer in an array, memset should operate on the page it points to
-		memset(page2kva(page), '\0', PGSIZE);
+		memset(page2kva(page), 0, PGSIZE);
 	}
 	return page;
 }
@@ -428,8 +425,6 @@ pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
 	// Fill this function in
-	assert(pgdir);
-
 	pte_t *r = NULL;
 	pde_t *pd_entry = &pgdir[PDX(va)];
 	if (!(*pd_entry & PTE_P)) {
@@ -442,13 +437,10 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 			return r;
 		}
 		pi->pp_ref++;
-		physaddr_t phy_addr = page2pa(pi);
-		*pd_entry = (phy_addr & ~0xfff) | PTE_P | PTE_W | PTE_U;
+		*pd_entry = (page2pa(pi) & ~0xfff) | PTE_P | PTE_W | PTE_U;
 	} 
-	pte_t *pt_base = (pte_t *)KADDR(PTE_ADDR(*pd_entry));
-	r = &pt_base[PTX(va)];
 
-	return r;
+	return (pte_t *)KADDR(PTE_ADDR(*pd_entry))+PTX(va);
 }
 
 //
@@ -518,6 +510,8 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	} 
 	*pte = (page2pa(pp) & ~0xfff) | (perm & 0xfff) | PTE_P;
 	pp->pp_ref++;
+	// IA32-3: table 4-2
+	pgdir[PDX(va)] |= perm;
 	
 	return 0;
 }
@@ -566,12 +560,11 @@ void
 page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
-	pte_t *i;
-	pte_t **pte_store = &i;
-	struct PageInfo *pi = page_lookup(pgdir, va, pte_store);
+	pte_t *pte_store;
+	struct PageInfo *pi = page_lookup(pgdir, va, &pte_store);
 	if (pi != NULL) {
 		page_decref(pi);
-		*(*pte_store) = 0;
+		*pte_store = 0;
 		tlb_invalidate(pgdir, va);
 	}
 }

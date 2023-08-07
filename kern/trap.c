@@ -149,7 +149,30 @@ trap_init(void)
 	SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, handler47, 0);
 	SETGATE(idt[IRQ_OFFSET+IRQ_ERROR], 0, GD_KT, handler51, 0);
 
-	SETGATE(idt[T_SYSCALL], 1, GD_KT, handler48, 3);
+	// IA32-3: 5.12.1.2. 
+	// FLAG USAGE BY EXCEPTION- OR INTERRUPT-HANDLER PROCEDURE
+	// When accessing an exception or interrupt handler through either an interrupt 
+	// gate or a trap gate, the processor clears the TF flag in the EFLAGS register 
+	// after it saves the contents of the EFLAGS register on the stack. (On calls to 
+	// exception and interrupt handlers, the processor also clears the VM, RF, and NT 
+	// flags in the EFLAGS register, after they are saved on the stack.) Clearing the 
+	// TF flag prevents instruction tracing from affecting interrupt response. 
+	// A subsequent IRET instruction restores the TF (and VM, RF, and NT) flags to 
+	// the values in the saved contents of the EFLAGS register on the stack.
+	// The only difference between an interrupt gate and a trap gate is the way the
+	// processor handles the IF flag in the EFLAGS register. When accessing an 
+	// exception or interrupt-handling procedure through an interrupt gate, the 
+	// processor clears the IF flag to prevent other interrupts from interfering with 
+	// the current interrupt handler. A subsequent IRET instruction restores the IF flag 
+	// to its value in the saved contents of the EFLAGS register on the stack. Accessing 
+	// a handler procedure through a trap gate does not affect the IF flag.
+	// 
+	// ****lab4****: In JOS, we make a key simplification compared to xv6 Unix. 
+	// External device interrupts are always disabled when in the kernel (and, 
+	// like xv6, enabled when in user space)
+	// 
+	// so do not be influenced by xv6, istrap here should be 0
+	SETGATE(idt[T_SYSCALL], 0, GD_KT, handler48, 3);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -341,8 +364,6 @@ trap_dispatch(struct Trapframe *tf)
 void
 trap(struct Trapframe *tf)
 {
-	// write_eflags(read_eflags() & ~FL_IF);
-
 	// The environment may have set DF and some versions
 	// of GCC rely on DF being clear
 	asm volatile("cld" ::: "cc");
@@ -360,7 +381,7 @@ trap(struct Trapframe *tf)
 	// fails, DO NOT be tempted to fix it by inserting a "cli" in
 	// the interrupt path.
 	assert(!(read_eflags() & FL_IF));
-
+	
 	if ((tf->tf_cs & 3) == 3) {
 		assert(tf->tf_eflags & FL_IF);
 
@@ -492,7 +513,7 @@ to_history_bin_you_go:
 
 void
 timer_handler(struct Trapframe *tf) {
-	cprintf("[%08x] timer interrupt on irq 0\n", curenv ? curenv->env_id:0);
+	// cprintf("[%08x] timer interrupt on irq 0\n", curenv ? curenv->env_id:0);
 	// print_trapframe(curenv ? &curenv->env_tf : tf);
 	sched_yield();
 }

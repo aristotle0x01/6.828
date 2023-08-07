@@ -232,7 +232,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	// Set the basic status variables.
 	e->env_parent_id = parent_id;
 	e->env_type = ENV_TYPE_USER;
-	e->env_status = ENV_NOT_RUNNABLE;
+	e->env_status = ENV_RUNNABLE;
 	e->env_runs = 0;
 
 	// Clear out all the saved register state,
@@ -364,13 +364,15 @@ load_icode(struct Env *e, uint8_t *binary)
 		panic("load_icode: e_magic %d", elfhdr->e_magic);
 	}
 
-	// switch to env's address space
-	lcr3(PADDR(e->env_pgdir));
 
 	struct Proghdr *ph, *eph;
 	// load each program segment (ignores ph flags)
 	ph = (struct Proghdr *) (((uint8_t *) elfhdr) + elfhdr->e_phoff);
 	eph = ph + elfhdr->e_phnum;
+
+	// switch to env's address space
+	lcr3(PADDR(e->env_pgdir));
+
 	for (; ph < eph; ph++) {
 		if (ph->p_type != ELF_PROG_LOAD) {
 			continue;
@@ -381,6 +383,10 @@ load_icode(struct Env *e, uint8_t *binary)
 		memcpy((void *)(ph->p_va), binary + ph->p_offset, ph->p_filesz);
 		memset((void *)(ph->p_va+ph->p_filesz), 0, ph->p_memsz-ph->p_filesz);
 	}
+
+	// switch back to kernel address space
+	lcr3(PADDR(kern_pgdir));
+
 	// the entry point from the ELF header
 	(e->env_tf).tf_eip = elfhdr->e_entry;
 
@@ -388,13 +394,7 @@ load_icode(struct Env *e, uint8_t *binary)
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
-	struct PageInfo *page = page_alloc(ALLOC_ZERO);
-	assert(page);
-	// page->pp_ref++;
-	page_insert(e->env_pgdir, page, (void *)(USTACKTOP - PGSIZE), PTE_U | PTE_W | PTE_P);
-
-	// switch back to kernel address space
-	lcr3(PADDR(kern_pgdir));
+	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
 }
 
 //
@@ -414,9 +414,8 @@ env_create(uint8_t *binary, enum EnvType type)
 	if (r) {
 		panic("env_alloc: %e", r);
 	}
-	newenv_store->env_type = type;
 	load_icode(newenv_store, binary);
-	newenv_store->env_status = ENV_RUNNABLE;
+	newenv_store->env_type = type;
 }
 
 //
@@ -510,7 +509,6 @@ env_pop_tf(struct Trapframe *tf)
 	curenv->env_cpunum = cpunum();
 
 	assert(tf->tf_eflags & FL_IF);
-	// write_eflags(read_eflags() | FL_IF);
 	asm volatile(
 		"\tmovl %0,%%esp\n"
 		"\tpopal\n"
@@ -549,20 +547,15 @@ env_run(struct Env *e)
 	//	e->env_tf to sensible values.
 
 	// LAB 3: Your code here.
-	if (curenv != e) {
-		if (curenv && curenv->env_status == ENV_RUNNING) {
-			curenv->env_status = ENV_RUNNABLE;
-		}
-		curenv = e;
-		curenv->env_status = ENV_RUNNING;
-		curenv->env_runs++;
-
-		unlock_kernel();
-		lcr3(PADDR(e->env_pgdir));
-	} else {
-		unlock_kernel();
+	if (curenv && curenv->env_status == ENV_RUNNING) {
+		curenv->env_status = ENV_RUNNABLE;
 	}
-
+	curenv = e;
+	e->env_status = ENV_RUNNING;
+	e->env_runs++;
+	lcr3(PADDR(e->env_pgdir));
+	unlock_kernel();
+	
 	env_pop_tf(&(e->env_tf));
 }
 
