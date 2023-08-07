@@ -7,6 +7,9 @@
 // It is one of the bits explicitly allocated to user processes (PTE_AVAIL).
 #define PTE_COW		0x800
 
+extern volatile pte_t uvpt[];
+extern volatile pde_t uvpd[]; 
+
 //
 // Custom page fault handler - if faulting page is copy-on-write,
 // map in our own private writable copy.
@@ -71,7 +74,7 @@ duppage(envid_t envid, unsigned pn)
 	pte_t pte = uvpt[pn];
 	if ((pte & PTE_W) || (pte & PTE_COW)) {
 		if ((r = sys_page_map(0, va, envid, va, perm))) {
-		panic("duppage sys_page_map error %e\n", r);
+			panic("duppage sys_page_map error %e\n", r);
 		}
 		if ((r = sys_page_map(0, va, 0, va, perm))) {
 			panic("duppage sys_page_map error old %e\n", r);
