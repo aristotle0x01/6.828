@@ -202,25 +202,7 @@ implementation of copy-on-write
 
 
 
-### Exercise 13 & 14
 
-**caveat**: `SETGATE(idt[T_SYSCALL], 0, GD_KT, handler48, 3) vs SETGATE(idt[T_SYSCALL], 1, GD_KT, handler48, 3)`
-
-
-
-**simplification** (ref: gatsbyd/mit_6.828_jos_2018)
-
-```
-env_setup_vm: 
-	memcpy(e->env_pgdir, kern_pgdir, PGSIZE);
-
-mem_init: 
-	boot_map_region(kern_pgdir, KERNBASE, (uint32_t)(0xffffffff-KERNBASE+1), 0, PTE_W | PTE_P);
-```
-
-
-
-### test is important, the way test is done in Jos
 
 
 
