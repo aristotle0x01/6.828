@@ -65,9 +65,9 @@ _pgfault_upcall:
 	// ways as registers become unavailable as scratch space.
 	//
 	// LAB 4: Your code here.
-	subl $4, 0x30(%esp)
+	subl $4, 0x30(%esp) // tf_esp-4
 	movl 0x30(%esp), %eax
-	movl 0x28(%esp), %ebx
+	movl 0x28(%esp), %ebx // tf_eip
 	movl %ebx, (%eax)
 
 	// Restore the trap-time registers.  After you do this, you
