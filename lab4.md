@@ -12,6 +12,8 @@
       - kernel stack: `mem_init_mp()`
       - tss descriptor & registers
       - trap init: `trap_init_percpu()`
+      - per cpu tss & gdt config
+      - mpentry.S
 
   - locking: `lock_kernel(); unlock_kernel()`
 
@@ -20,7 +22,7 @@
   - round-robin scheduling
 
     - sched_yield()
-    - trap without trapret
+    - trap without trapret, unlike xv6
 
   - process management
 
@@ -133,7 +135,7 @@ a.first stack overview
 
 b. stack arrangement & blank word
 
-<img src="./raw/lab4-user-level-page-fault-exception.png?raw=true" alt="jos stack view" style="zoom:70%; float:left" />
+<img src="./raw/lab4-user-level-page-fault-exception.png?raw=true" alt="user exception stack" style="zoom:50%; float:left" />
 
 
 
@@ -199,7 +201,7 @@ mem_init:
 
   **xv6 **a simple, Unix-like teaching operating system： chapter 4 locking [**Interrupt handlers**]
 
-  > Xv6 is more conservative: when a processor enters a spin-lock critical section, xv6 always ensures interrupts are disabled on that processor.Interrupts may still occur on other processors, so an interrupt’s acquire can wait for a thread to release a spin-lock; just not on the same processor
+  > xv6 is more conservative: when a processor enters a spin-lock critical section, xv6 always ensures interrupts are disabled on that processor.Interrupts may still occur on other processors, so an interrupt’s acquire can wait for a thread to release a spin-lock; just not on the same processor
   >
   > ```
   > void
@@ -233,7 +235,7 @@ sleep-locks leave interrupts enabled, they cannot be used in interrupt handlers.
 ### **Code: Scheduling** <!--worth reading-->
 
 - xv6 acquires ptable.lock in one thread (often in yield) and releases the lock in a different thread (the scheduler thread or another next kernel thread): **<u>this is very interesting, that is to say, lock is maintained per cpu wide, not merely per thread wide</u>**
-- when a new process is first scheduled, it begins at **<u>forkret</u>**. Forkret exists to release the ptable.lock
+- when a new process is first scheduled, it begins at **<u>forkret</u>**. forkret exists to release the ptable.lock
 
 <img src="./raw/xv6-scheduler-locking.png?raw=true" alt="ssh_port" style="zoom:60%;float: left" />
 
