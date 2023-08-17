@@ -66,6 +66,18 @@
 
 
 
+## Questions
+
+#### q1: in xv6, how does `filewrite & writei` ensure atomicity and durability or not?
+
+Ans: from xv6 implementation, if `filewrite` was broken into several parts, then `writei` will only ensure consistency of each part
+
+
+
+q2:  xv6 file system
+
+<img src="./raw/xv6-file-system.png?raw=true" alt="xv6 file system" style="zoom:50%; float:left" />
+
 
 
 ## reference
