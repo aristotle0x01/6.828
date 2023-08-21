@@ -186,6 +186,5 @@ struct PageInfo {
 
 	uint16_t pp_ref;
 };
-
 #endif /* !__ASSEMBLER__ */
 #endif /* !JOS_INC_MEMLAYOUT_H */

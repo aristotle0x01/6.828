@@ -65,13 +65,114 @@ static const char *trapname(int trapno)
 	return "(unknown trap)";
 }
 
-
 void
 trap_init(void)
 {
 	extern struct Segdesc gdt[];
 
+	extern void handler0();
+	extern void handler1();
+	extern void handler2();
+	extern void handler3();
+	extern void handler4();
+	extern void handler5();
+	extern void handler6();
+	extern void handler7();
+	extern void handler8();
+	extern void handler10();
+	extern void handler11();
+	extern void handler12();
+	extern void handler13();
+	extern void handler14();
+	extern void handler16();
+	extern void handler17();
+	extern void handler18();
+	extern void handler19();
+	extern void handler32();
+	extern void handler33();
+	extern void handler34();
+	extern void handler35();
+	extern void handler36();
+	extern void handler37();
+	extern void handler38();
+	extern void handler39();
+	extern void handler40();
+	extern void handler41();
+	extern void handler42();
+	extern void handler43();
+	extern void handler44();
+	extern void handler45();
+	extern void handler46();
+	extern void handler47();
+	extern void handler48();
+	extern void handler51();
+
+	// when you use func in an expression, it is equivalent to using &func, 
+	// which explicitly takes the address of the function. Both func and &func 
+	// will give you the same address of the function in memory.
+	// cprintf("  handler address 0x%08x 0x%08x\n", handler0, &handler0);
+
 	// LAB 3: Your code here.
+	SETGATE(idt[T_DIVIDE], 0, GD_KT, handler0, 0);
+	SETGATE(idt[T_DEBUG], 0, GD_KT, &handler1, 3);
+	SETGATE(idt[T_NMI], 0, GD_KT, handler2, 0);
+	SETGATE(idt[T_BRKPT], 0, GD_KT, handler3, 3);
+	SETGATE(idt[T_OFLOW], 0, GD_KT, handler4, 0);
+	SETGATE(idt[T_BOUND], 0, GD_KT, handler5, 0);
+	SETGATE(idt[T_ILLOP], 0, GD_KT, handler6, 0);
+	SETGATE(idt[T_DEVICE], 0, GD_KT, handler7, 0);
+	SETGATE(idt[T_DBLFLT], 0, GD_KT, handler8, 0);
+	SETGATE(idt[T_TSS], 0, GD_KT, handler10, 0);
+	SETGATE(idt[T_SEGNP], 0, GD_KT, handler11, 0);
+	SETGATE(idt[T_STACK], 0, GD_KT, handler12, 0);
+	SETGATE(idt[T_GPFLT], 0, GD_KT, handler13, 0);
+	SETGATE(idt[T_PGFLT], 0, GD_KT, handler14, 0);
+	SETGATE(idt[T_FPERR], 0, GD_KT, handler16, 0);
+	SETGATE(idt[T_ALIGN], 0, GD_KT, handler17, 0);
+	SETGATE(idt[T_MCHK], 0, GD_KT, handler18, 0);
+	SETGATE(idt[T_SIMDERR], 0, GD_KT, handler19, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_TIMER], 0, GD_KT, handler32, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_KBD], 0, GD_KT, handler33, 0);
+	SETGATE(idt[IRQ_OFFSET+2], 0, GD_KT, handler34, 0);
+	SETGATE(idt[IRQ_OFFSET+3], 0, GD_KT, handler35, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_SERIAL], 0, GD_KT, handler36, 0);
+	SETGATE(idt[IRQ_OFFSET+5], 0, GD_KT, handler37, 0);
+	SETGATE(idt[IRQ_OFFSET+6], 0, GD_KT, handler38, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_SPURIOUS], 0, GD_KT, handler39, 0);
+	SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, handler40, 0);
+	SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, handler41, 0);
+	SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, handler42, 0);
+	SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, handler43, 0);
+	SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, handler44, 0);
+	SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, handler45, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_IDE], 0, GD_KT, handler46, 0);
+	SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, handler47, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_ERROR], 0, GD_KT, handler51, 0);
+
+	// IA32-3: 5.12.1.2. 
+	// FLAG USAGE BY EXCEPTION- OR INTERRUPT-HANDLER PROCEDURE
+	// When accessing an exception or interrupt handler through either an interrupt 
+	// gate or a trap gate, the processor clears the TF flag in the EFLAGS register 
+	// after it saves the contents of the EFLAGS register on the stack. (On calls to 
+	// exception and interrupt handlers, the processor also clears the VM, RF, and NT 
+	// flags in the EFLAGS register, after they are saved on the stack.) Clearing the 
+	// TF flag prevents instruction tracing from affecting interrupt response. 
+	// A subsequent IRET instruction restores the TF (and VM, RF, and NT) flags to 
+	// the values in the saved contents of the EFLAGS register on the stack.
+	// The only difference between an interrupt gate and a trap gate is the way the
+	// processor handles the IF flag in the EFLAGS register. When accessing an 
+	// exception or interrupt-handling procedure through an interrupt gate, the 
+	// processor clears the IF flag to prevent other interrupts from interfering with 
+	// the current interrupt handler. A subsequent IRET instruction restores the IF flag 
+	// to its value in the saved contents of the EFLAGS register on the stack. Accessing 
+	// a handler procedure through a trap gate does not affect the IF flag.
+	// 
+	// ****lab4****: In JOS, we make a key simplification compared to xv6 Unix. 
+	// External device interrupts are always disabled when in the kernel (and, 
+	// like xv6, enabled when in user space)
+	// 
+	// so do not be influenced by xv6, istrap here should be 0
+	SETGATE(idt[T_SYSCALL], 0, GD_KT, handler48, 3);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -105,21 +206,22 @@ trap_init_percpu(void)
 	// user space on that CPU.
 	//
 	// LAB 4: Your code here:
+	int cpu_id = thiscpu->cpu_id;
 
 	// Setup a TSS so that we get the right stack
 	// when we trap to the kernel.
-	ts.ts_esp0 = KSTACKTOP;
-	ts.ts_ss0 = GD_KD;
-	ts.ts_iomb = sizeof(struct Taskstate);
+	thiscpu->cpu_ts.ts_esp0 = KSTACKTOP - cpu_id * (KSTKSIZE + KSTKGAP);
+	thiscpu->cpu_ts.ts_ss0 = GD_KD;
+	thiscpu->cpu_ts.ts_iomb = sizeof(struct Taskstate);
 
 	// Initialize the TSS slot of the gdt.
-	gdt[GD_TSS0 >> 3] = SEG16(STS_T32A, (uint32_t) (&ts),
-					sizeof(struct Taskstate) - 1, 0);
-	gdt[GD_TSS0 >> 3].sd_s = 0;
+	gdt[(GD_TSS0 >> 3) + cpu_id] = SEG16(STS_T32A, (uint32_t) (&(thiscpu->cpu_ts)),
+					sizeof(struct Taskstate)-1, 0);
+	gdt[(GD_TSS0 >> 3) + cpu_id].sd_s = 0;
 
 	// Load the TSS selector (like other segment selectors, the
 	// bottom three bits are special; we leave them 0)
-	ltr(GD_TSS0);
+	ltr(GD_TSS0+cpu_id*8);
 
 	// Load the IDT
 	lidt(&idt_pd);
@@ -176,16 +278,7 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-
-	// Handle spurious interrupts
-	// The hardware sometimes raises these because of noise on the
-	// IRQ line or other reasons. We don't care.
-	if (tf->tf_trapno == IRQ_OFFSET + IRQ_SPURIOUS) {
-		cprintf("Spurious interrupt on irq 7\n");
-		print_trapframe(tf);
-		return;
-	}
-
+	
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
@@ -193,13 +286,81 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle keyboard and serial interrupts.
 	// LAB 5: Your code here.
 
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
+	switch (tf->tf_trapno) {
+		case T_DEBUG:
+		case T_BRKPT:
+			monitor(tf);
+			break;
+		case T_PGFLT:
+			page_fault_handler(tf);
+			break;
+		case T_SYSCALL:
+			tf->tf_regs.reg_eax = syscall(
+				tf->tf_regs.reg_eax,
+				tf->tf_regs.reg_edx,
+				tf->tf_regs.reg_ecx,
+				tf->tf_regs.reg_ebx,
+				tf->tf_regs.reg_edi,
+				tf->tf_regs.reg_esi);
+			break;
+		case (IRQ_OFFSET + IRQ_TIMER):
+			lapic_eoi();
+			timer_handler(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_KBD):
+			lapic_eoi();
+			cprintf("KBD interrupt on irq 1\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_SERIAL):
+			lapic_eoi();
+			cprintf("Serial interrupt on irq 4\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_SPURIOUS):
+			lapic_eoi();
+			// Handle spurious interrupts
+			// The hardware sometimes raises these because of noise on the
+			// IRQ line or other reasons. We don't care.
+			cprintf("Spurious interrupt on irq 7\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + IRQ_IDE):
+			lapic_eoi();
+			cprintf("IDE interrupt on irq 14\n");
+			print_trapframe(tf);
+			break;
+		case (IRQ_OFFSET + 2):
+		case (IRQ_OFFSET + 3):
+		case (IRQ_OFFSET + 5):
+		case (IRQ_OFFSET + 6):
+		case (IRQ_OFFSET + 8):
+		case (IRQ_OFFSET + 9):
+		case (IRQ_OFFSET + 10):
+		case (IRQ_OFFSET + 11):
+		case (IRQ_OFFSET + 12):
+		case (IRQ_OFFSET + 13):
+		case (IRQ_OFFSET + 15):
+		case (IRQ_OFFSET + IRQ_ERROR):
+			lapic_eoi();
+			print_trapframe(tf);
+			if (tf->tf_cs == GD_KT)
+				panic("unhandled trap in kernel");
+			else {
+				env_destroy(curenv);
+				return;
+			}
+			break;
+		default:
+			// Unexpected trap: The user process or the kernel has a bug.
+			print_trapframe(tf);
+			if (tf->tf_cs == GD_KT)
+				panic("unhandled trap in kernel");
+			else {
+				env_destroy(curenv);
+				return;
+			}
+			break;
 	}
 }
 
@@ -223,12 +384,15 @@ trap(struct Trapframe *tf)
 	// fails, DO NOT be tempted to fix it by inserting a "cli" in
 	// the interrupt path.
 	assert(!(read_eflags() & FL_IF));
-
+	
 	if ((tf->tf_cs & 3) == 3) {
+		assert(tf->tf_eflags & FL_IF);
+
 		// Trapped from user mode.
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
+		lock_kernel();
 		assert(curenv);
 
 		// Garbage collect if current enviroment is a zombie
@@ -262,7 +426,6 @@ trap(struct Trapframe *tf)
 		sched_yield();
 }
 
-
 void
 page_fault_handler(struct Trapframe *tf)
 {
@@ -274,6 +437,9 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
+	if ((tf->tf_cs & 3) == 0) {
+		panic("page fault in kernel va: 0x%08x, ip: 0x%08x\n", fault_va, tf->tf_eip);
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
@@ -308,7 +474,39 @@ page_fault_handler(struct Trapframe *tf)
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
 	// LAB 4: Your code here.
+	if (!curenv->env_pgfault_upcall) {
+		goto to_history_bin_you_go;
+	}
+	uintptr_t tf_esp = curenv->env_tf.tf_esp;
+	// exception stack top
+	uintptr_t excp_esp;
+	// already on user exception stack
+	if (tf_esp >= (UXSTACKTOP-PGSIZE) && tf_esp <= (UXSTACKTOP-1)) {
+		excp_esp = tf_esp;
+		excp_esp -= 4;
+		*((uintptr_t *)excp_esp) = 0;
+	} else {
+		excp_esp = UXSTACKTOP-1;
+	}
 
+	// added after testing faultnostack
+	user_mem_assert(curenv, (void *)excp_esp, sizeof(struct UTrapframe), PTE_P|PTE_U|PTE_W);
+
+	excp_esp -= sizeof(struct UTrapframe);
+	struct UTrapframe *utf = (struct UTrapframe *)excp_esp;
+	utf->utf_fault_va = fault_va;
+	utf->utf_err = tf->tf_err;
+	utf->utf_regs = tf->tf_regs;
+	utf->utf_eip = tf->tf_eip;
+	utf->utf_eflags = tf->tf_eflags;
+	utf->utf_esp = tf->tf_esp;
+	
+	tf->tf_eip = (uintptr_t)(curenv->env_pgfault_upcall);
+	tf->tf_esp = excp_esp;
+	env_run(curenv);
+	return;
+	
+to_history_bin_you_go:
 	// Destroy the environment that caused the fault.
 	cprintf("[%08x] user fault va %08x ip %08x\n",
 		curenv->env_id, fault_va, tf->tf_eip);
@@ -316,3 +514,24 @@ page_fault_handler(struct Trapframe *tf)
 	env_destroy(curenv);
 }
 
+void
+timer_handler(struct Trapframe *tf) {
+	// cprintf("[%08x] timer interrupt on irq 0\n", curenv ? curenv->env_id:0);
+	// print_trapframe(curenv ? &curenv->env_tf : tf);
+	sched_yield();
+}
+
+void
+kbd_handler(struct Trapframe *tf) {
+
+}
+
+void
+serial_handler(struct Trapframe *tf) {
+
+}
+
+void
+ide_handler(struct Trapframe *tf) {
+
+}
