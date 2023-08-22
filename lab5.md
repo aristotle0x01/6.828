@@ -64,6 +64,8 @@
 
 ### **Exercise 1**
 
+Q1: no need, because it would be saved per env
+
 
 
 ## Questions

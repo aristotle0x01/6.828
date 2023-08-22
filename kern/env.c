@@ -419,6 +419,13 @@ env_create(uint8_t *binary, enum EnvType type)
 	}
 	load_icode(newenv_store, binary);
 	newenv_store->env_type = type;
+	if (type == ENV_TYPE_FS) {
+		newenv_store->env_pgdir[PDX(MMIOBASE)] = kern_pgdir[PDX(MMIOBASE)] | PTE_U;
+		// In protected mode, when it encounters an I/O instruction 
+		// (IN, INS, OUT, or OUTS), the processor first checks whether
+		// CPL <= IOPL. If this condition is true, the I/O operation may proceed
+		newenv_store->env_tf.tf_eflags = newenv_store->env_tf.tf_eflags | FL_IOPL_3;
+	}
 }
 
 //
