@@ -10,7 +10,8 @@
 // Validate the file system super-block.
 void
 check_super(void)
-{
+{	
+	cprintf("superblock %08x %08x\n", super->s_magic, super->s_nblocks);
 	if (super->s_magic != FS_MAGIC)
 		panic("bad file system magic number");
 
