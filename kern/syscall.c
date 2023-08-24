@@ -87,9 +87,8 @@ sys_exofork(void)
 	// LAB 4: Your code here.
 	struct Env *env;
 	int r = env_alloc(&env, curenv->env_id);
-	if (r) {
-		return r;
-	}
+	if (r) return r;
+
 	env->env_status = ENV_NOT_RUNNABLE;
 	env->env_tf = curenv->env_tf;
 	env->env_tf.tf_regs.reg_eax = 0;
@@ -114,15 +113,12 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
-	if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE) {
+	if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE) 
 		return -E_INVAL;
-	}
 
 	struct Env *e;
 	int r = envid2env(envid, &e, 1);
-	if (r) {
-		return -E_BAD_ENV;
-	}
+	if (r) return -E_BAD_ENV;
 
 	e->env_status = status;
 	return 0;
@@ -158,9 +154,7 @@ sys_env_set_pgfault_upcall(envid_t envid, void *func)
 	// LAB 4: Your code here.
 	struct Env *e;
 	int r = envid2env(envid, &e, 1);
-	if (r) {
-		return -E_BAD_ENV;
-	}
+	if (r) return -E_BAD_ENV;
 
 	user_mem_assert(e, func, 4, PTE_U | PTE_P);
 	
@@ -195,21 +189,17 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   allocated!
 
 	// LAB 4: Your code here.
-	if ((uintptr_t)va >= UTOP || ((uintptr_t)va%PGSIZE) != 0) {
+	if ((uintptr_t)va >= UTOP || ((uintptr_t)va%PGSIZE) != 0) 
 		return -E_INVAL;
-	}
-	if (!(perm & PTE_U) || !(perm & PTE_P) || (perm & ~PTE_SYSCALL)) {
+	if (!(perm & PTE_U) || !(perm & PTE_P) || (perm & ~PTE_SYSCALL)) 
 		return -E_INVAL;
-	}
 
 	struct Env *e;
-	if (envid2env(envid, &e, 1)) {
-		return -E_BAD_ENV;
-	}
+	if (envid2env(envid, &e, 1)) return -E_BAD_ENV;
+
 	struct PageInfo *pi = page_alloc(ALLOC_ZERO);
-	if (!pi) {
-		return -E_NO_MEM;
-	}
+	if (!pi) return -E_NO_MEM;
+
 	if (page_insert(e->env_pgdir, pi, va, perm)) {
 		page_free(pi);
 		return -E_NO_MEM;
@@ -247,30 +237,25 @@ sys_page_map(envid_t srcenvid, void *srcva,
 
 	// LAB 4: Your code here.
 	struct Env *se, *de;
-	if (envid2env(srcenvid, &se, 1) || envid2env(dstenvid, &de, 1)) {
+	if (envid2env(srcenvid, &se, 1) || envid2env(dstenvid, &de, 1)) 
 		return -E_BAD_ENV;
-	}
-	if ((uintptr_t)srcva >= UTOP || ((uintptr_t)srcva%PGSIZE) != 0) {
+	if ((uintptr_t)srcva >= UTOP || ((uintptr_t)srcva%PGSIZE) != 0) 
 		return -E_INVAL;
-	}
-	if ((uintptr_t)dstva >= UTOP || ((uintptr_t)dstva%PGSIZE) != 0) {
+	if ((uintptr_t)dstva >= UTOP || ((uintptr_t)dstva%PGSIZE) != 0) 
 		return -E_INVAL;
-	}
+	
 	pte_t *store;
 	struct PageInfo *pi = page_lookup(se->env_pgdir, srcva, &store);
-	if (!pi) {
+	if (!pi) 
 		return -E_INVAL; 
-	}
-	if ((perm & PTE_W) && ((*store) & PTE_W) == 0) {
+	if ((perm & PTE_W) && ((*store) & PTE_W) == 0) 
 		return -E_INVAL;
-	}
-	if (0 == (perm & PTE_U) || 0 == (perm & PTE_P) || (perm & ~PTE_SYSCALL)) {
+	if (0 == (perm & PTE_U) || 0 == (perm & PTE_P) || (perm & ~PTE_SYSCALL))
 		return -E_INVAL;
-	}
 	
-	if (page_insert(de->env_pgdir, pi, dstva, perm)) {
+	if (page_insert(de->env_pgdir, pi, dstva, perm)) 
 		return -E_NO_MEM;
-	}
+	
 	return 0;
 }
 
@@ -288,12 +273,10 @@ sys_page_unmap(envid_t envid, void *va)
 
 	// LAB 4: Your code here.
 	struct Env *e;
-	if (envid2env(envid, &e, 1)) {
+	if (envid2env(envid, &e, 1)) 
 		return -E_BAD_ENV;
-	}
-	if ((uintptr_t)va >= UTOP || ((uintptr_t)va%PGSIZE) != 0) {
+	if ((uintptr_t)va >= UTOP || ((uintptr_t)va%PGSIZE) != 0)
 		return -E_INVAL;
-	}
 
 	page_remove(e->env_pgdir, va);
 	return 0;
@@ -342,34 +325,27 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
 	// LAB 4: Your code here.
 	struct Env *e;
-	if (envid2env(envid, &e, 0)) {
+	if (envid2env(envid, &e, 0))
 		return -E_BAD_ENV;
-	}
-	if (!e->env_ipc_recving || e->env_status != ENV_NOT_RUNNABLE) {
+	if (!e->env_ipc_recving || e->env_status != ENV_NOT_RUNNABLE)
 		return -E_IPC_NOT_RECV;
-	}
 
 	uintptr_t va = (uintptr_t)srcva;
 	uintptr_t dva = (uintptr_t)e->env_ipc_dstva;
 	bool page_transfer = (va < UTOP) && (dva < UTOP) && (dva%PGSIZE == 0);
 	if (page_transfer) {
-		if (va%PGSIZE != 0) {
+		if (va%PGSIZE != 0)
 			return -E_INVAL;
-		}
-		if (!(perm & PTE_U) || !(perm & PTE_P) || (perm & ~PTE_SYSCALL)) {
+		if (!(perm & PTE_U) || !(perm & PTE_P) || (perm & ~PTE_SYSCALL))
 			return -E_INVAL;
-		}
+		
 		pte_t *entry;
 		struct PageInfo *pg = page_lookup(curenv->env_pgdir, srcva, &entry);
-		if (!pg) {
+		if (!pg) return -E_INVAL;
+		if (!(*entry & PTE_W) && (perm & PTE_W))
 			return -E_INVAL;
-		}
-		if (!(*entry & PTE_W) && (perm & PTE_W)){
-			return -E_INVAL;
-		}
-		if (page_insert(e->env_pgdir, pg, e->env_ipc_dstva, perm)) {
+		if (page_insert(e->env_pgdir, pg, e->env_ipc_dstva, perm))
 			return -E_NO_MEM;
-		}
 	}
 
 	e->env_ipc_recving = 0;
@@ -401,9 +377,7 @@ sys_ipc_recv(void *dstva)
 {
 	// LAB 4: Your code here.
 	uintptr_t va = (uintptr_t)dstva;
-	if ((va < UTOP) && (va%PGSIZE) != 0) {
-		return -E_INVAL;
-	}
+	if ((va < UTOP) && (va%PGSIZE) != 0) return -E_INVAL;
 
 	curenv->env_ipc_recving = 1;
 	curenv->env_ipc_dstva = dstva;

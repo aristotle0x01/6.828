@@ -25,20 +25,17 @@ ipc_recv(envid_t *from_env_store, void *pg, int *perm_store)
 	// LAB 4: Your code here.
 	int r;
 	if ((r=sys_ipc_recv(pg==NULL ? (void *)UTOP:pg))) {
-		if (from_env_store) {
+		if (from_env_store) 
 			*from_env_store = 0;
-		}
-		if (perm_store) {
+		if (perm_store) 
 			*perm_store = 0;
-		}
 		return r;
 	} else {
-		if (from_env_store) {
+		if (from_env_store) 
 			*from_env_store = thisenv->env_ipc_from;
-		}
-		if (perm_store) {
+		if (perm_store) 
 			*perm_store = thisenv->env_ipc_perm;
-		}
+		
 		return thisenv->env_ipc_value;
 	}
 }
@@ -60,15 +57,13 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 	int r = -E_IPC_NOT_RECV;
 	while (r) {
 		r = sys_ipc_try_send(to_env, val, pg==NULL ? (void *)UTOP:pg, perm);
-		if (!r) {
-			break;
-		}
-		if (r != -E_IPC_NOT_RECV) {
+		if (!r) break;
+
+		if (r != -E_IPC_NOT_RECV) 
 			panic("ipc_send %e\n", r);
-		}
-		if (++counter % 5 == 0) {
+
+		if (++counter % 5 == 0)
 			sys_yield();
-		}
 	}
 }
 
