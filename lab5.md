@@ -82,6 +82,12 @@ q2:  xv6 file system
 
 
 
+## ubuntu version issue
+
+excercise 2 **check_super** won't pass on **ubuntu20**, changed to **ubuntu14-i386** it reported <u>**mmap /fs/clean-fs.img invalid argument**</u> error. Finally passed on **ubuntu-16.04.6-desktop-i386**
+
+
+
 ## reference
 
 [ATA PIO Mode](https://wiki.osdev.org/ATA_PIO_Mode)

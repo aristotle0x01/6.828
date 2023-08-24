@@ -11,7 +11,7 @@
 **basic dependencies:**
 
 - Virtualbox Version Version 6.1.44 r156814 (Qt5.6.3)
-- ubuntu-20.04.5-desktop-amd64.iso
+- ubuntu-16.04.6-desktop-i386.iso
 - mac as host
 
 ```
@@ -21,7 +21,7 @@ cat /etc/lsb-release
 
 
 
-**Ubuntu 14.04 VBox Guest Additions problem (shared folder)**
+**VBox Guest Additions problem (shared folder)**
 
 https://askubuntu.com/questions/655262/ubuntu-14-04-vbox-guest-additions-problem-installing
 
@@ -69,10 +69,7 @@ ssh -p '2222' 'root@localhost'
 apt-get upgrade
 apt-get update
 
-// ubuntu20
 apt-get install pkg-config libsdl1.2-dev libtool-bin libglib2.0-dev libz-dev libpixman-1-dev
-// utuntu14
-apt-get install pkg-config libsdl1.2-dev libtool libglib2.0-dev zlib1g-dev libpixman-1-dev
 ./configure --disable-kvm --enable-debug --target-list="i386-softmmu x86_64-softmmu"
 make && make install
 
