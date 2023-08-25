@@ -148,7 +148,7 @@ file_block_walk(struct File *f, uint32_t filebno, uint32_t **ppdiskbno, bool all
 
 	if (filebno < NDIRECT) {
 		if (ppdiskbno) {
-			*ppdiskbno = &(f->f_direct[filebno]);
+			*ppdiskbno = &f->f_direct[filebno];
 		}
 		return 0;
 	}
@@ -156,16 +156,16 @@ file_block_walk(struct File *f, uint32_t filebno, uint32_t **ppdiskbno, bool all
 	if (!f->f_indirect) {
 		if (!alloc) return -E_NOT_FOUND;
 
-		if (f->f_indirect=alloc_block(), f->f_indirect < 0) {
+		int blk = 0;
+		if (blk=alloc_block(), blk < 0) {
 			return -E_NO_DISK;
 		}
+		f->f_indirect = blk;
 	}
 
 	uintptr_t *pi = diskaddr(f->f_indirect);
-	filebno -= NDIRECT;
-	if (ppdiskbno) {
-		*ppdiskbno = &pi[filebno];
-	}
+	if (ppdiskbno) 
+		*ppdiskbno = &pi[filebno-NDIRECT];
 	return 0;
 }
 
@@ -183,16 +183,14 @@ file_get_block(struct File *f, uint32_t filebno, char **blk)
     // LAB 5: Your code here.
     if (filebno >= (NDIRECT + NINDIRECT)) return -E_INVAL;
 
-	uint32_t *ppdiskbno;
-	if (!file_block_walk(f, filebno, &ppdiskbno, 1)) return -E_NO_DISK;
+	uint32_t *pdiskbno;
+	if (file_block_walk(f, filebno, &pdiskbno, 1) < 0) return -E_NO_DISK;
 
-	uint32_t *pslot = (uint32_t *)(*ppdiskbno);
-	if (*pslot == 0) {
-		if (*pslot = alloc_block(), *pslot < 0) {
-			return -E_NO_DISK;
-		}
-	}
-	*blk = diskaddr(*pslot);
+	uint32_t bn = *pdiskbno;
+	if (!bn && (bn=alloc_block(), bn < 0)) 
+		return -E_NO_DISK;
+	*pdiskbno = bn;
+	*blk = diskaddr(bn);
 
 	return 0;
 }
