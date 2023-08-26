@@ -237,7 +237,7 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 		cprintf("serve_write %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
 
 	// Lab 5: Your code here:
-	assert(req->req_n <= (PGSIZE - sizeof(int) - sizeof(size_t)));
+	assert(req->req_n <= (PGSIZE-sizeof(int)-sizeof(size_t)));
 
 	struct OpenFile *o;
 	int r;

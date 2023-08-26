@@ -60,6 +60,12 @@
 
 
 
+## jos file ipc
+
+<img src="./raw/lab5-jos-file-ipc.png?raw=true" alt="jos file system" style="zoom:70%; float:left" />
+
+
+
 ## **Exercises**
 
 ### **Exercise 1**

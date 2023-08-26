@@ -435,9 +435,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 		}
 
 		struct PageInfo *pi = page_alloc(ALLOC_ZERO);
-		if (pi == NULL) {
-			return r;
-		}
+		if (pi == NULL) return r;
 		pi->pp_ref++;
 		*pd_entry = (page2pa(pi) & ~0xfff) | PTE_P | PTE_W | PTE_U;
 	} 
@@ -500,9 +498,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
-	if (pte == NULL) {
-		return -E_NO_MEM;
-	}
+	if (pte == NULL) return -E_NO_MEM;
 	if (*pte & PTE_P) {
 		// if va<->pp mapping already exists, page_remove may free pp which it shouldn't
 		// inc/dec pp->pp_ref around page_remove to avoid scenario above
