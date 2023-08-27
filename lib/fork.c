@@ -39,17 +39,16 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-	if ((r = sys_page_alloc(0, (void *)PFTEMP, PTE_P|PTE_U|PTE_W)) < 0){
+	int PUW = PTE_P|PTE_U|PTE_W;
+	if ((r=sys_page_alloc(0, (void *)PFTEMP, PUW)) < 0)
 		panic("pgfault sys_page_alloc: %e", r);
-	}
+	
 	memmove(PFTEMP, ROUNDDOWN(addr, PGSIZE), PGSIZE);
 
-	if ((r = sys_page_map(0, PFTEMP, 0, ROUNDDOWN(addr, PGSIZE), PTE_P|PTE_U|PTE_W)) < 0){
+	if ((r=sys_page_map(0, PFTEMP, 0, ROUNDDOWN(addr, PGSIZE), PUW)) < 0)
 		panic("pgfault sys_page_map: %e", r);
-	}
-	if ((r = sys_page_unmap(0, PFTEMP)) < 0){
+	if ((r=sys_page_unmap(0, PFTEMP)) < 0)
 		panic("pgfault sys_page_unmap: %e", r);
-	}
 }
 
 //
@@ -73,16 +72,13 @@ duppage(envid_t envid, unsigned pn)
 	int r;
 	pte_t pte = uvpt[pn];
 	if ((pte & PTE_W) || (pte & PTE_COW)) {
-		if ((r = sys_page_map(0, va, envid, va, perm))) {
+		if ((r=sys_page_map(0, va, envid, va, perm)))
 			panic("duppage sys_page_map error %e\n", r);
-		}
-		if ((r = sys_page_map(0, va, 0, va, perm))) {
+		if ((r=sys_page_map(0, va, 0, va, perm)))
 			panic("duppage sys_page_map error old %e\n", r);
-		}
 	} else {
-		if ((r = sys_page_map(0, va, envid, va, pte & 0xfff))) {
+		if ((r=sys_page_map(0, va, envid, va, pte & 0xfff)))
 			panic("duppage sys_page_map error %e\n", r);
-		}
 	}
 	
 	return 0;
@@ -111,9 +107,8 @@ fork(void)
 	set_pgfault_handler(pgfault);
 
 	envid_t evnid = sys_exofork();
-	if (evnid < 0) {
+	if (evnid < 0)
 		panic("user fork error %e\n", evnid);
-	} 
 	if (evnid == 0) {
 		// child
 		thisenv = &envs[ENVX(sys_getenvid())];
@@ -124,33 +119,26 @@ fork(void)
 	int pn, r;
 	for (int di=0; di < PDX(UTOP); di++) {
 		pde_t pde_entry = uvpd[di];
-		if (!(pde_entry & PTE_P)) {
-			continue;
-		}
+		if (!(pde_entry & PTE_P)) continue;
 
 		for (int ti=0; ti<NPTENTRIES; ti++) {
 			pn = (di << 10) | ti;
-			if (pn == PGNUM(UXSTACKTOP-PGSIZE)) {
+			if (pn == PGNUM(UXSTACKTOP-PGSIZE))
 				continue;
-			}
-
-			if (!(uvpt[pn] & PTE_P)) {
+			if (!(uvpt[pn] & PTE_P))
 				continue;
-			}
 
 			duppage(evnid, pn);
 		}
 	}
 
-	if ((r = sys_page_alloc(evnid, (void *)(UXSTACKTOP-PGSIZE), PTE_P | PTE_U | PTE_W))) {
+	if ((r=sys_page_alloc(evnid, (void *)(UXSTACKTOP-PGSIZE), PTE_P|PTE_U|PTE_W)))
 		panic("user fork sys_page_alloc error %e\n", r);
-	}
-	if ((r = sys_env_set_pgfault_upcall(evnid, (void *)(thisenv->env_pgfault_upcall)))) {
+	if ((r=sys_env_set_pgfault_upcall(evnid, (void *)(thisenv->env_pgfault_upcall))))
 		panic("user fork upcall error %e\n", r);
-	}
-	if ((r = sys_env_set_status(evnid, ENV_RUNNABLE))) {
+	if ((r=sys_env_set_status(evnid, ENV_RUNNABLE)))
 		panic("user fork status error %e\n", r);
-	}
+	
 	return evnid;
 }
 
