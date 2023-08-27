@@ -38,7 +38,7 @@ pgfault(struct UTrapframe *utf)
 	// Hint:
 	//   You should make three system calls.
 
-	// LAB 4: Your code here.
+	// LAB 4: Your code here.	
 	int PUW = PTE_P|PTE_U|PTE_W;
 	if ((r=sys_page_alloc(0, (void *)PFTEMP, PUW)) < 0)
 		panic("pgfault sys_page_alloc: %e", r);
@@ -72,6 +72,11 @@ duppage(envid_t envid, unsigned pn)
 	int r;
 	pte_t pte = uvpt[pn];
 	if ((pte & PTE_W) || (pte & PTE_COW)) {
+		if(pte & PTE_SHARE) {
+			if ((r=sys_page_map(0, va, envid, va, pte & PTE_SYSCALL)))
+				panic("duppage sys_page_map share error %e\n", r);
+			return 0;
+		}
 		if ((r=sys_page_map(0, va, envid, va, perm)))
 			panic("duppage sys_page_map error %e\n", r);
 		if ((r=sys_page_map(0, va, 0, va, perm)))
@@ -115,7 +120,6 @@ fork(void)
 		return evnid;
 	}
 
-	void *va;
 	int pn, r;
 	for (int di=0; di < PDX(UTOP); di++) {
 		pde_t pde_entry = uvpd[di];
