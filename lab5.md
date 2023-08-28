@@ -2,75 +2,134 @@
 
 ## lab key points
 
-- part A: multi-cpu support and multitasking
+- key files
 
-  - processor
+| `fs/fs.c`       | Code that mainipulates the file system's on-disk structure.  |
+| --------------- | ------------------------------------------------------------ |
+| `fs/bc.c`       | A simple block cache built on top of our user-level page fault handling facility. |
+| `fs/ide.c`      | Minimal PIO-based (non-interrupt-driven) IDE driver code.    |
+| `fs/serv.c`     | The file system server that interacts with client environments using file system IPCs. |
+| `lib/fd.c`      | Code that implements the general UNIX-like file descriptor interface. |
+| `lib/file.c`    | The driver for on-disk file type, implemented as a file system IPC client. |
+| `lib/console.c` | The driver for console input/output file type.               |
+| `lib/spawn.c`   | Code skeleton of the `spawn` library call.                   |
 
-    - bootstrap processor
-    - application processor
-    - cpu initialization
-      - kernel stack: `mem_init_mp()`
-      - tss descriptor & registers
-      - trap init: `trap_init_percpu()`
-      - per cpu tss & gdt config
-      - mpentry.S
+- file system (on-disk structure)
 
-  - locking: `lock_kernel(); unlock_kernel()`
+  - sector and block: 512 -> 4096bytes
 
-    no more than one environment can run in kernel mode; lock is held when enter kernel mode, released when return to user mode
+  - superblocks
 
-  - round-robin scheduling
+    ```
+    struct Super {
+    	uint32_t s_magic;		// Magic number: FS_MAGIC
+    	uint32_t s_nblocks;		// Total number of blocks on disk
+    	struct File s_root;		// Root directory node
+    };
+    ```
 
-    - sched_yield()
-    - trap without trapret, unlike xv6
+    <img src="./raw/lab5-disk.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
-  - process management
+  - file meta-data: struct File
 
-    - sys_exofork
-    - sys_env_set_status
-    - sys_page_alloc
-    - sys_page_map
-    - sys_page_unmap
+    ```
+    struct File {
+    	char f_name[MAXNAMELEN];	// filename
+    	off_t f_size;			// file size in bytes
+    	uint32_t f_type;		// file type
+    
+    	// Block pointers.
+    	// A block is allocated iff its value is != 0.
+    	uint32_t f_direct[NDIRECT];	// direct blocks
+    	uint32_t f_indirect;		// indirect block
+    
+    	// Pad out to 256 bytes; must do arithmetic in case we're compiling
+    	// fsformat on a 64-bit machine.
+    	uint8_t f_pad[256 - MAXNAMELEN - 8 - 4*NDIRECT - 4];
+    } __attribute__((packed));	// required only on some 64-bit machines
+    ```
 
-- part B: copy-on-write fork
+    <img src="./raw/lab5-file.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
-  - user-level page fault handling
-    - exception stacks in user env
-      - sys_env_set_pgfault_upcall
-      - _pgfault_upcall: lib/pfentry.S
-      - set_pgfault_handler: lib/pgfault.c
-      - stack arrangement & blank word
-  - copy-on-write fork
-    - uvpt & uvpd
-    - PTE_COW & FEC_WR
-    - lib/fork.c
-      - fork()
-      - duppage()
-      - pgfault()
+  - directory vs regular file
 
-- part C: preemptive multitasking & IPC
+    unlike xv6, no special inode blocks; the tree-like hierarchy has to be deduced from cache in memory
+    
+    <img src="./raw/lab5-file-hierarchy.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
-  - preemption & clock interrupt
-    - `FL_IF` flag disabled in kernel, enabled in user
-    - clock generation: `lapicw(TIMER, PERIODIC | (IRQ_OFFSET + IRQ_TIMER))` 
-  - IPC
-    - send & recv msg
-    - transferring pages
-    - diff sys & lib functions
+- disk access priviledge: **`ENV_TYPE_FS`; `IOPL_3`**
+
+- block cache
+
+  - **\#define DISKMAP  0x10000000**: disk block n mapped in memory
+
+  - bc_pgfault: ***demand paging***
+
+    ```
+    void
+    bc_init(void)
+    {
+    	struct Super super;
+    	set_pgfault_handler(bc_pgfault); // file server
+    	...
+    }
+    ```
+
+  - diskaddr(uint32_t blockno)
+
+  - flush_block
+
+- file operations
+
+  ***workhorses of the file system***
+
+  - **file_block_walk**: maps from a block offset within a file to the pointer for that block in the `struct File`
+  - **file_get_block**: maps to the actual disk block, allocating a new one if necessary
+
+- file system interface
+
+  - c/s mode
+
+  - ipc mechanism
+
+  - various structures & definitions: `union Fsipc`, `FDTABLE`, `struct Dev`, `struct OpenFile`
+
+    ```
+    Regular env           FS env
+       +---------------+   +---------------+
+       |      read     |   |   file_read   |
+       |   (lib/fd.c)  |   |   (fs/fs.c)   |
+    ...|.......|.......|...|.......^.......|...............
+       |       v       |   |       |       | RPC mechanism
+       |  devfile_read |   |  serve_read   |
+       |  (lib/file.c) |   |  (fs/serv.c)  |
+       |       |       |   |       ^       |
+       |       v       |   |       |       |
+       |     fsipc     |   |     serve     |
+       |  (lib/file.c) |   |  (fs/serv.c)  |
+       |       |       |   |       ^       |
+       |       v       |   |       |       |
+       |   ipc_send    |   |   ipc_recv    |
+       |       |       |   |       ^       |
+       +-------|-------+   +-------|-------+
+               |                   |
+               +-------------------+
+    ```
+
+- spawn process: **spawn vs exec**
+
+  - state sharing between env through fork and spawn
+    - **PTE_SHARE**:  ` serve_open: *perm_store = PTE_P|PTE_U|PTE_W|PTE_SHARE;`
+    - *file descriptor* sharing: different env write to same file
+
+
+- shell redirect: dup usage and its implementation tricks
 
 
 
 ## jos file ipc
 
 <img src="./raw/lab5-jos-file-ipc.png?raw=true" alt="jos file system" style="zoom:70%; float:left" />
-
-
-
-## **Exercises**
-
-### **Exercise 1**
-
-Q1: no need, because it would be saved per env
 
 
 
