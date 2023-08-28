@@ -219,8 +219,8 @@ serve_read(envid_t envid, union Fsipc *ipc)
 	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
 		return r;
 
-	assert(req->req_n <= PGSIZE);
-	r = file_read(o->o_file, ret->ret_buf, req->req_n, o->o_fd->fd_offset);
+	int count = req->req_n > PGSIZE ? PGSIZE : req->req_n;
+	r = file_read(o->o_file, ret->ret_buf, count, o->o_fd->fd_offset);
 	if (r >= 0) o->o_fd->fd_offset += r;
 	return r;
 }

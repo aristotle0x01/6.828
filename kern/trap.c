@@ -309,13 +309,11 @@ trap_dispatch(struct Trapframe *tf)
 			break;
 		case (IRQ_OFFSET + IRQ_KBD):
 			lapic_eoi();
-			cprintf("KBD interrupt on irq 1\n");
-			print_trapframe(tf);
+			kbd_intr();
 			break;
 		case (IRQ_OFFSET + IRQ_SERIAL):
 			lapic_eoi();
-			cprintf("Serial interrupt on irq 4\n");
-			print_trapframe(tf);
+			serial_intr();
 			break;
 		case (IRQ_OFFSET + IRQ_SPURIOUS):
 			lapic_eoi();

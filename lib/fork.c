@@ -82,7 +82,7 @@ duppage(envid_t envid, unsigned pn)
 		if ((r=sys_page_map(0, va, 0, va, perm)))
 			panic("duppage sys_page_map error old %e\n", r);
 	} else {
-		if ((r=sys_page_map(0, va, envid, va, pte & 0xfff)))
+		if ((r=sys_page_map(0, va, envid, va, pte & PTE_SYSCALL)))
 			panic("duppage sys_page_map error %e\n", r);
 	}
 	
