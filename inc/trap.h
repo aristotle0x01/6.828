@@ -55,6 +55,12 @@ struct PushRegs {
 	uint32_t reg_eax;
 } __attribute__((packed));
 
+// remove "__attribute__((packed))"
+// due to init_stack(child, argv, &child_tf.tf_esp) compile warning error
+// here it makes no difference
+// ref: 
+//	https://stackoverflow.com/questions/11772553/why-padding-is-not-happening-in-this-case
+//	https://stackoverflow.com/questions/11770451/what-is-the-meaning-of-attribute-packed-aligned4
 struct Trapframe {
 	struct PushRegs tf_regs;
 	uint16_t tf_es;

@@ -69,7 +69,10 @@ dumbfork(void)
 		duppage(envid, addr);
 
 	// Also copy the stack we are currently running on.
-	duppage(envid, ROUNDDOWN(&addr, PGSIZE));
+	// check explanation in lab4.md Exercise 7
+	// duppage(envid, ROUNDDOWN(&addr, PGSIZE));
+	// cprintf("stack %08x %08x %08x %08x\n", ROUNDDOWN(&addr, PGSIZE), USTACKTOP-PGSIZE, addr, end);
+	duppage(envid, (void *)(USTACKTOP-PGSIZE));
 
 	// Start the child environment running
 	if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
