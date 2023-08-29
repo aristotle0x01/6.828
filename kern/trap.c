@@ -521,8 +521,7 @@ to_history_bin_you_go:
 
 void
 timer_handler(struct Trapframe *tf) {
-	// cprintf("[%08x] timer interrupt on irq 0\n", curenv ? curenv->env_id:0);
-	// print_trapframe(curenv ? &curenv->env_tf : tf);
+	time_tick();
 	sched_yield();
 }
 
