@@ -4,10 +4,11 @@
 #include <kern/pci.h>
 #include <kern/pcireg.h>
 #include <kern/e1000.h>
+#include <kern/pmap.h>
 
 // Flag to do "lspci" at bootup
 static int pci_show_devs = 1;
-static int pci_show_addrs = 0;
+static int pci_show_addrs = 1;
 
 // PCI "configuration mechanism one"
 static uint32_t pci_conf1_addr_ioport = 0x0cf8;
@@ -15,6 +16,7 @@ static uint32_t pci_conf1_data_ioport = 0x0cfc;
 
 // Forward declarations
 static int pci_bridge_attach(struct pci_func *pcif);
+static int pci_nic_attach(struct pci_func *pcif);
 
 // PCI driver table
 struct pci_driver {
@@ -31,8 +33,11 @@ struct pci_driver pci_attach_class[] = {
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device. key1
 // and key2 should be the vendor ID and device ID respectively
 struct pci_driver pci_attach_vendor[] = {
+	{ 0x8086, E1000_DEV_ID_82540EM, &pci_nic_attach },
 	{ 0, 0, 0 },
 };
+
+volatile uint32_t *bar0;
 
 static void
 pci_conf1_set_addr(uint32_t bus,
@@ -186,6 +191,13 @@ pci_bridge_attach(struct pci_func *pcif)
 	return 1;
 }
 
+static int
+pci_nic_attach(struct pci_func *pcif)
+{
+	pci_func_enable(pcif);
+	return 1;
+}
+
 // External PCI subsystem interface
 
 void
@@ -198,8 +210,9 @@ pci_func_enable(struct pci_func *f)
 
 	uint32_t bar_width;
 	uint32_t bar;
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END;
-	     bar += bar_width)
+	uint32_t i;
+	for (bar = PCI_MAPREG_START, i=0; bar < PCI_MAPREG_END;
+	     bar += bar_width, i++)
 	{
 		uint32_t oldv = pci_conf_read(f, bar);
 
@@ -210,6 +223,8 @@ pci_func_enable(struct pci_func *f)
 		if (rv == 0)
 			continue;
 
+		cprintf("  bar[%d] 0x%x\n", i, bar);
+
 		int regnum = PCI_MAPREG_NUM(bar);
 		uint32_t base, size;
 		if (PCI_MAPREG_TYPE(rv) == PCI_MAPREG_TYPE_MEM) {
@@ -218,14 +233,16 @@ pci_func_enable(struct pci_func *f)
 
 			size = PCI_MAPREG_MEM_SIZE(rv);
 			base = PCI_MAPREG_MEM_ADDR(oldv);
+			if (i == 0) 
+				bar0 = mmio_map_region(base, size);
 			if (pci_show_addrs)
-				cprintf("  mem region %d: %d bytes at 0x%x\n",
-					regnum, size, base);
+				cprintf("    mem region %d: %d bytes at phy:0x%08x va:0x%08x\n",
+					regnum, size, base, bar0);
 		} else {
 			size = PCI_MAPREG_IO_SIZE(rv);
 			base = PCI_MAPREG_IO_ADDR(oldv);
 			if (pci_show_addrs)
-				cprintf("  io region %d: %d bytes at 0x%x\n",
+				cprintf("    io region %d: %d bytes at 0x%x\n",
 					regnum, size, base);
 		}
 
@@ -245,6 +262,7 @@ pci_func_enable(struct pci_func *f)
 	cprintf("PCI function %02x:%02x.%d (%04x:%04x) enabled\n",
 		f->bus->busno, f->dev, f->func,
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
+	cprintf("  device status register: 0x%08x\n", *(uint32_t *)(((char *)bar0)+E1000_STATUS));
 }
 
 int
