@@ -37,7 +37,7 @@ struct pci_driver pci_attach_vendor[] = {
 	{ 0, 0, 0 },
 };
 
-volatile uint32_t *bar0;
+volatile uint8_t *bar0;
 
 static void
 pci_conf1_set_addr(uint32_t bus,
@@ -262,7 +262,13 @@ pci_func_enable(struct pci_func *f)
 	cprintf("PCI function %02x:%02x.%d (%04x:%04x) enabled\n",
 		f->bus->busno, f->dev, f->func,
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
-	cprintf("  device status register: 0x%08x\n", *(uint32_t *)(((char *)bar0)+E1000_STATUS));
+	cprintf("  device status register: 0x%08x\n", *(uint32_t *)(bar0+E1000_STATUS));
+
+	cprintf("  %02x:%02x.%d (%04x:%04x) tx init\n",
+		f->bus->busno, f->dev, f->func,
+		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
+	tx_init();
+	tx_demo();
 }
 
 int
