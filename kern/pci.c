@@ -268,7 +268,7 @@ pci_func_enable(struct pci_func *f)
 		f->bus->busno, f->dev, f->func,
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
 	tx_init();
-	tx_demo();
+	// tx_demo();
 }
 
 int
