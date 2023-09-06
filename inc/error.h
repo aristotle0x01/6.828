@@ -26,6 +26,9 @@ enum {
 	E_NOT_EXEC	,	// File not a valid executable
 	E_NOT_SUPP	,	// Operation not supported
 
+	// network system error codes -- only seen in user-level
+	E_TX_QUEUE_FULL	,	// tx queue full
+
 	MAXERROR
 };
 

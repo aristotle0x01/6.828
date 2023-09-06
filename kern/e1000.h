@@ -82,4 +82,5 @@ struct tx_desc
 
 void tx_init(void);
 void tx_demo(void);
+int32_t tx_send(const char *packet, size_t len);
 #endif  // SOL >= 6

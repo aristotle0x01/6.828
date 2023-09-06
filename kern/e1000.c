@@ -1,6 +1,7 @@
 #include <kern/e1000.h>
 #include <kern/pmap.h>
 #include <inc/string.h>
+#include <inc/error.h>
 
 // LAB 6: Your driver code here
 #define MAX_TX_DESCRIPTOR 64 /* max num of tx descritor in ring buffer */
@@ -67,4 +68,22 @@ tx_demo(void) {
         tx_desc_list[ti].status = 0;
         *tx_tdt = (ti + 1)%MAX_TX_DESCRIPTOR;
     }
+}
+
+int32_t
+tx_send(const char *packet, size_t len) {
+    if (packet == NULL || len == 0) return 0;
+    if (len > MAX_ETHERNET_PACKET_LEN) return -E_INVAL;
+
+    uint32_t ti = *tx_tdt;
+    if (tx_desc_list[ti].length > 0 && !(tx_desc_list[ti].status&E1000_TXD_STAT_DD)) {
+        return -E_TX_QUEUE_FULL;
+    }
+
+    strcpy((char *)tx_buffer_array[ti], packet);
+    tx_desc_list[ti].length = len;
+    tx_desc_list[ti].status = 0;
+    *tx_tdt = (ti + 1)%MAX_TX_DESCRIPTOR;
+
+    return 0;
 }

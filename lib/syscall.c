@@ -122,3 +122,10 @@ sys_time_msec(void)
 {
 	return (unsigned int) syscall(SYS_time_msec, 0, 0, 0, 0, 0, 0);
 }
+
+// SYS_send_ether_packet
+int
+sys_send_ether_packet(char *packet, size_t length)
+{
+	return syscall(SYS_send_ether_packet, 0, (uint32_t)packet, length, 0, 0, 0);
+}
