@@ -195,6 +195,17 @@ static int
 pci_nic_attach(struct pci_func *pcif)
 {
 	pci_func_enable(pcif);
+
+	bar0 = mmio_map_region(pcif->reg_base[0], pcif->reg_size[0]);
+	cprintf("  mem mapping phy:0x%08x->va:0x%08x %d bytes\n", pcif->reg_base[0], bar0, pcif->reg_size[0]);
+
+	cprintf("  device status register: 0x%08x\n", E1000_REG(E1000_STATUS));
+
+	// nic initialization
+	tx_init();
+	// tx_demo();
+	rx_init();
+
 	return 1;
 }
 
@@ -233,11 +244,8 @@ pci_func_enable(struct pci_func *f)
 
 			size = PCI_MAPREG_MEM_SIZE(rv);
 			base = PCI_MAPREG_MEM_ADDR(oldv);
-			if (i == 0) 
-				bar0 = mmio_map_region(base, size);
 			if (pci_show_addrs)
-				cprintf("    mem region %d: %d bytes at phy:0x%08x va:0x%08x\n",
-					regnum, size, base, bar0);
+				cprintf("    mem region %d: %d bytes at 0x%x\n", regnum, size, base);
 		} else {
 			size = PCI_MAPREG_IO_SIZE(rv);
 			base = PCI_MAPREG_IO_ADDR(oldv);
@@ -262,13 +270,6 @@ pci_func_enable(struct pci_func *f)
 	cprintf("PCI function %02x:%02x.%d (%04x:%04x) enabled\n",
 		f->bus->busno, f->dev, f->func,
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
-	cprintf("  device status register: 0x%08x\n", *(uint32_t *)(bar0+E1000_STATUS));
-
-	cprintf("  %02x:%02x.%d (%04x:%04x) tx init\n",
-		f->bus->busno, f->dev, f->func,
-		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
-	tx_init();
-	// tx_demo();
 }
 
 int

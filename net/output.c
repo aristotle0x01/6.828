@@ -14,6 +14,10 @@ output(envid_t ns_envid)
 	{
 		envid_t whom;
 		int32_t r = ipc_recv(&whom, (void *)&nsipcbuf, 0);
+		if (r != NSREQ_OUTPUT) {
+			cprintf("output req type error: %d\n", r);
+			continue;
+		}
 		if (whom == 0) {
 			cprintf("output ipc_recv: %e\n", r);
 			continue;
