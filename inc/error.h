@@ -28,6 +28,7 @@ enum {
 
 	// network system error codes -- only seen in user-level
 	E_TX_QUEUE_FULL	,	// tx queue full
+	E_RX_QUEUE_EMPTY,   // rx queue empty
 
 	MAXERROR
 };

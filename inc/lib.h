@@ -60,7 +60,8 @@ int	sys_page_unmap(envid_t env, void *pg);
 int	sys_ipc_try_send(envid_t to_env, uint32_t value, void *pg, int perm);
 int	sys_ipc_recv(void *rcv_pg);
 unsigned int sys_time_msec(void);
-int sys_send_ether_packet(char *packet, size_t length);
+int sys_send_ether_packet(const char *packet, size_t length);
+int sys_recv_ether_packet(char *packet, size_t length);
 
 // This must be inlined.  Exercise for reader: why?
 static inline envid_t __attribute__((always_inline))

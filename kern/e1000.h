@@ -129,6 +129,9 @@
 #define E1000_RAL     E1000_RA 			/* Receive Address LOW */
 #define E1000_RAH     (E1000_RAL+4)  	/* Receive Address HIGH */
 #define E1000_RAH_AV  0x80000000        /* Receive descriptor valid */
+/* Receive Descriptor bit definitions */
+#define E1000_RXD_STAT_DD       0x01    /* Descriptor Done */
+#define E1000_RXD_STAT_EOP      0x02    /* End of Packet */
 
 /* ethernet protocol */
 #define MAX_ETHERNET_PACKET_LEN  1518   /* max ethernet packet length in bytes */
@@ -159,4 +162,5 @@ struct rx_desc
 	uint16_t special;
 };
 void rx_init(void);
+int32_t rx_recv(char *packet, size_t len);
 #endif  // SOL >= 6

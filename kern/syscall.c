@@ -419,6 +419,18 @@ sys_send_ether_packet(const char *packet, size_t len)
 	return tx_send(packet, len);
 }
 
+// send ether packet.
+static int
+sys_recv_ether_packet(char *packet, size_t len)
+{
+	// LAB 6: Your code here.
+	if (packet == NULL || len == 0) return 0;
+
+	user_mem_assert(curenv, packet, len, PTE_U | PTE_P | PTE_W);
+
+	return rx_recv(packet, len);
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -462,6 +474,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_time_msec();
 		case SYS_send_ether_packet:
 			return sys_send_ether_packet((const char *)a1, a2);
+		case SYS_recv_ether_packet:
+			return sys_recv_ether_packet((char *)a1, a2);
 		default:
 			return -E_INVAL;
 	}

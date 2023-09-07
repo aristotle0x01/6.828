@@ -121,3 +121,30 @@ rx_init(void) {
     // the Receive Control (RCTL) register
     E1000_REG(E1000_RCTL) = E1000_RCTL_EN|E1000_RCTL_SECRC|E1000_RCTL_BAM;
 }
+
+int32_t
+rx_recv(char *packet, size_t len) {
+    // 3.2.6 Receive Descriptor Queue Structure
+
+    if (packet == NULL || len == 0) return 0;
+
+    uint32_t ri = *rx_rdt;
+    int count = 0;
+    while (count++ < MAX_RX_DESCRIPTOR) {
+        if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) {
+            ri = (ri + 1)%MAX_RX_DESCRIPTOR;
+            continue;
+        }
+
+        if (len > rx_desc_list[ri].length) len = rx_desc_list[ri].length;
+        memcpy(packet, rx_buffer_array[ri], len);
+
+        // ri can be reused by hardware, advance by one or more?
+        rx_desc_list[ri].status = 0;
+        *rx_rdt = (ri + 1)%MAX_RX_DESCRIPTOR;
+        
+        return len;
+    }
+
+    return -E_RX_QUEUE_EMPTY;
+}
