@@ -128,23 +128,34 @@ rx_recv(char *packet, size_t len) {
 
     if (packet == NULL || len == 0) return 0;
 
-    uint32_t ri = *rx_rdt;
-    int count = 0;
-    while (count++ < MAX_RX_DESCRIPTOR) {
-        if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) {
-            ri = (ri + 1)%MAX_RX_DESCRIPTOR;
-            continue;
-        }
+    // by: make E1000_DEBUG=TX,TXERR,RX,RXERR,RXFILTER run-net_testinput-nox
+    // there would be "e1000: RCTL: 127, mac_reg[RCTL] = 0x4008002" in console output
 
-        if (len > rx_desc_list[ri].length) len = rx_desc_list[ri].length;
-        memcpy(packet, rx_buffer_array[ri], len);
+    // above has implications, since "E1000_REG(E1000_RDT)=MAX_RX_DESCRIPTOR-1",
+    // which means *rx_rdt initially would be 127, and "beyond" makes it never
+    // contains a slot with E1000_RXD_STAT_DD, so the first ri would be 0, and
+    // *rx_rdt should be updated to ri but not ri+1, so there will always a slot 
+    // wasted as tail mark
+    uint32_t ri = (*rx_rdt + 1)%MAX_RX_DESCRIPTOR;
+    if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) 
+        return -E_RX_QUEUE_EMPTY;
 
-        // ri can be reused by hardware, advance by one or more?
-        rx_desc_list[ri].status = 0;
-        *rx_rdt = (ri + 1)%MAX_RX_DESCRIPTOR;
-        
-        return len;
-    }
+    if (len > rx_desc_list[ri].length) len = rx_desc_list[ri].length;
+    memcpy(packet, rx_buffer_array[ri], len);
 
-    return -E_RX_QUEUE_EMPTY;
+    // If software statically allocates buffers, and uses memory read 
+    // to check for completed descriptors, it simply has to zero the 
+    // status byte in the descriptor to make it ready for reuse by 
+    // hardware. This is not a hardware requirement (moving the hardware 
+    // tail pointer is), but is necessary for performing an in–memory scan.
+    rx_desc_list[ri].status = 0;
+    // This register holds a value that is an offset from the base, 
+    // and identifies the location beyond the last descriptor hardware 
+    // can process. Note that tail should still point to an area in the 
+    // descriptor ring (somewhere between RDBA and RDBA + RDLEN). 
+    // This is because tail points to the location where software writes 
+    // the first new descriptor.
+    *rx_rdt = ri;
+
+    return len;
 }

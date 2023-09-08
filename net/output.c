@@ -24,15 +24,12 @@ output(envid_t ns_envid)
 		}
 		assert(ns_envid == whom);
 		
-		int count = 0;
-		while (count < 10) {
+		while (1) {
 			r = sys_send_ether_packet(nsipcbuf.pkt.jp_data, nsipcbuf.pkt.jp_len);
 			if (r == 0)	break;
 
-			cprintf("output sys_send_ether_packet: %e\n", r);
-			if (r == E_TX_QUEUE_FULL) count++;
+			if (r == -E_TX_QUEUE_FULL) sys_yield();
 			else break;
 		}
-		if (count == 10) cprintf("output send exceed 10 times\n", r);
 	}
 }
