@@ -6,11 +6,11 @@
 
 [Illustrated Guide to Monitoring and Tuning the Linux Networking Stack: Receiving Data](https://blog.packagecloud.io/illustrated-guide-monitoring-tuning-linux-networking-stack-receiving-data/)
 
-<img src="./raw/lab6-nic-receive.jpeg?raw=true" alt="nic receive" style="zoom:25%; float:left" />
+<img src="./raw/lab6-nic-receive.jpeg?raw=true" alt="nic receive" style="zoom:20%; float:left" />
 
 [qemu-networking](https://wiki.qemu.org/Documentation/Networking)
 
-<img src="./raw/lab6-qemu-networking.png?raw=true" alt="nic receive" style="zoom:70%; float:left" />
+<img src="./raw/lab6-qemu-networking.png?raw=true" alt="nic receive" style="zoom:50%; float:left" />
 
 [Linux networking stack from the ground up, part 1](https://www.privateinternetaccess.com/blog/linux-networking-stack-from-the-ground-up-part-1/) : on PCI init
 
@@ -18,57 +18,77 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 
 `lspci -nn`
 
-<img src="./raw/lab6-lspci.jpg?raw=true" alt="nic receive" style="zoom:70%; float:left" />
-
-
+<img src="./raw/lab6-lspci.jpg?raw=true" alt="nic receive" style="zoom:50%; float:left" />
 
 
 
 ## lab key points
 
-- file system (on-disk structure)
+<img src="./raw/lab6-ns.png?raw=true" alt="ns stack" style="zoom:90%; float:left" />
 
-- - sector and block: 512 -> 4096bytes
+------
 
-  - superblocks
+<img src="./raw/lab6-e1000-arch.png?raw=true" alt="arch e1000" style="zoom:50%; float:left" />
 
-  - file meta-data: struct File
+- PCI config & enable
 
-  - directory vs regular file
-  
-    unlike xv6, no special inode blocks; the tree-like hierarchy has to be deduced from cache in memory
-    
-  
-- disk access priviledge: **`ENV_TYPE_FS`; `IOPL_3`**
+  <img src="./raw/lab6-pci-config.png?raw=true" alt="registers" style="zoom:45%; float:left" />
 
-- block cache
+  ------
 
-  - **\#define DISKMAP  0x10000000**: disk block n mapped in memory
-- diskaddr(uint32_t blockno)
-  - flush_block
+  <img src="./raw/lab6-pci-regs.png?raw=true" alt="pci registers" style="zoom:45%; float:left" />
 
-- file operations
+  <img src="./raw/lab6-bars.png?raw=true" alt="bars" style="zoom:45%; float:left" />
 
-  ***workhorses of the file system***
+  ------
 
-  - **file_block_walk**: maps from a block offset within a file to the pointer for that block in the `struct File`
-  - **file_get_block**: maps to the actual disk block, allocating a new one if necessary
+  <img src="./raw/lab6-registers.png?raw=true" alt="registers" style="zoom:45%; float:left" />
 
-- file system interface
+- memory-mapped I/O
 
-  - c/s mode
+- direct memory access
 
-  - ipc mechanism
+- transmit descriptor ring buffer (legacy mode)
 
-  - spawn process: **spawn vs exec**
+  ```
+  63            48 47   40 39   32 31   24 23   16 15             0
+    +---------------------------------------------------------------+
+    |                         Buffer address                        |
+    +---------------+-------+-------+-------+-------+---------------+
+    |    Special    |  CSS  | Status|  Cmd  |  CSO  |    Length     |
+    +---------------+-------+-------+-------+-------+---------------+
+  ```
 
-  
-  - state sharing between env through fork and spawn
-    - **PTE_SHARE**:  ` serve_open: *perm_store = PTE_P|PTE_U|PTE_W|PTE_SHARE;`
-    - *file descriptor* sharing: different env write to same file
+  <img src="./raw/lab6-tx-desc-cmd.png?raw=true" alt="tx cmd" style="zoom:45%; float:left" />
+
+  ------
+
+  <img src="./raw/lab6-tx-desc-status.png?raw=true" alt="tx status" style="zoom:45%; float:left" />
+
+  ------
+
+  <img src="./raw/lab6-tx-ring.png?raw=true" alt="tx ring" style="zoom:45%; float:left" />
 
 
-- shell redirect: dup usage and its implementation tricks
+- receive descriptor ring buffer
+
+
+  - Receive Address Registers (RAL and RAH)
+  - <font color="red">attention to <u>RDT</u></font>
+
+  <img src="./raw/lab6-rx-ring.png?raw=true" alt="rx ring" style="zoom:45%; float:left" />
+
+  ------
+
+  <img src="./raw/lab6-rx-desc.png?raw=true" alt="rx desc" style="zoom:45%; float:left" />
+
+  ------
+
+  <img src="./raw/lab6-rx-desc-status.png?raw=true" alt="rx status" style="zoom:45%; float:left" />
+
+- <font color="red">interrupt & poll</font>
+
+- lwip tcp/ip stack; web server
 
 
 
@@ -78,4 +98,4 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 
 ## knowledge
 
-- network card
+- ethtool

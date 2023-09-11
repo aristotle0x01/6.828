@@ -97,5 +97,6 @@ add "#include <sys/sysmacros.h>" to "qga/commands-posix.c"
 
 [lab4.md](lab4.md)
 
-[lab5.md](lab6.md)
+[lab5.md](lab5.md)
 
+[lab6.md](lab6.md)
