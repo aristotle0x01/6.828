@@ -1,4 +1,5 @@
 #include "ns.h"
+#include <inc/lib.h>
 
 extern union Nsipc nsipcbuf;
 
@@ -28,7 +29,7 @@ output(envid_t ns_envid)
 			r = sys_send_ether_packet(nsipcbuf.pkt.jp_data, nsipcbuf.pkt.jp_len);
 			if (r == 0)	break;
 
-			if (r == -E_TX_QUEUE_FULL) sys_yield();
+			if (r == -E_TX_QUEUE_FULL) sleep(5);
 			else break;
 		}
 	}

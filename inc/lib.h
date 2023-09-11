@@ -139,6 +139,7 @@ int	pipeisclosed(int pipefd);
 
 // wait.c
 void	wait(envid_t env);
+void    sleep(int msec);
 
 /* File open modes */
 #define	O_RDONLY	0x0000		/* open for reading only */
