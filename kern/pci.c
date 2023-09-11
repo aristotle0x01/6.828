@@ -14,9 +14,10 @@ static int pci_show_addrs = 1;
 static uint32_t pci_conf1_addr_ioport = 0x0cf8;
 static uint32_t pci_conf1_data_ioport = 0x0cfc;
 
+volatile uint8_t *e1000_bar0;
+
 // Forward declarations
 static int pci_bridge_attach(struct pci_func *pcif);
-static int pci_nic_attach(struct pci_func *pcif);
 
 // PCI driver table
 struct pci_driver {
@@ -33,11 +34,9 @@ struct pci_driver pci_attach_class[] = {
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device. key1
 // and key2 should be the vendor ID and device ID respectively
 struct pci_driver pci_attach_vendor[] = {
-	{ 0x8086, E1000_DEV_ID_82540EM, &pci_nic_attach },
+	{ E1000_VENDOR_ID, E1000_DEV_ID_82540EM, &pci_nic_attach },
 	{ 0, 0, 0 },
 };
-
-volatile uint8_t *bar0;
 
 static void
 pci_conf1_set_addr(uint32_t bus,
@@ -188,24 +187,6 @@ pci_bridge_attach(struct pci_func *pcif)
 			(busreg >> PCI_BRIDGE_BUS_SUBORDINATE_SHIFT) & 0xff);
 
 	pci_scan_bus(&nbus);
-	return 1;
-}
-
-static int
-pci_nic_attach(struct pci_func *pcif)
-{
-	pci_func_enable(pcif);
-
-	bar0 = mmio_map_region(pcif->reg_base[0], pcif->reg_size[0]);
-	cprintf("  mem mapping phy:0x%08x->va:0x%08x %d bytes\n", pcif->reg_base[0], bar0, pcif->reg_size[0]);
-
-	cprintf("  device status register: 0x%08x\n", E1000_REG(E1000_STATUS));
-
-	// nic initialization
-	tx_init();
-	// tx_demo();
-	rx_init();
-
 	return 1;
 }
 
