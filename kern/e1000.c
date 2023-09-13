@@ -3,6 +3,7 @@
 #include <inc/string.h>
 #include <inc/error.h>
 #include <inc/env.h>
+#include <inc/ns.h>
 #include <inc/trap.h>
 #include <kern/picirq.h>
 #include <kern/env.h>
@@ -148,10 +149,11 @@ rx_init(void) {
 }
 
 int32_t
-rx_recv(char *packet, size_t len) {
+rx_recv(physaddr_t packet, size_t len) {
     // 3.2.6 Receive Descriptor Queue Structure
+    if (packet == 0 || len == 0) return 0;
 
-    if (packet == NULL || len == 0) return 0;
+    struct jif_pkt *pkt = (struct jif_pkt *)KADDR(packet);
 
     // by: make E1000_DEBUG=TX,TXERR,RX,RXERR,RXFILTER run-net_testinput-nox
     // there would be "e1000: RCTL: 127, mac_reg[RCTL] = 0x4008002" in console output
@@ -170,7 +172,9 @@ rx_recv(char *packet, size_t len) {
     }
     
     if (len > rx_desc_list[ri].length) len = rx_desc_list[ri].length;
-    memcpy(packet, rx_buffer_array[ri], len);
+
+    pkt->jp_len = len;
+    memcpy(pkt->jp_data, rx_buffer_array[ri], len);
 
     // If software statically allocates buffers, and uses memory read 
     // to check for completed descriptors, it simply has to zero the 
@@ -198,11 +202,15 @@ void nic_intr() {
 	int icr = e1000_reg(E1000_ICR);
 
 	for (int i = 0; i < NENV; i++) {
-        if (envs[i].env_ipc_ether_recv && envs[i].env_status == ENV_NOT_RUNNABLE) {
-            envs[i].env_ipc_ether_recv = false;
-            envs[i].env_status = ENV_RUNNABLE;
-            envs[i].env_tf.tf_regs.reg_eax = -1;
-            return;
-        }
+        bool b = envs[i].env_ipc_ether_recv && envs[i].env_status == ENV_NOT_RUNNABLE;
+        if (!b) continue;
+
+        int r = rx_recv(envs[i].env_ipc_ether_addr, envs[i].env_ipc_ether_len);
+        envs[i].env_ipc_ether_recv = false;
+        envs[i].env_ipc_ether_addr = 0;
+        envs[i].env_ipc_ether_len = 0;
+        envs[i].env_tf.tf_regs.reg_eax = r;
+        envs[i].env_status = ENV_RUNNABLE;
+        return;
     }
 }

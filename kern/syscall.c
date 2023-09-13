@@ -421,18 +421,17 @@ sys_send_ether_packet(const char *packet, size_t len)
 
 // send ether packet.
 static int
-sys_recv_ether_packet(char *packet, size_t len)
+sys_recv_ether_packet(physaddr_t packet, size_t len)
 {
 	// LAB 6: Your code here.
-	if (packet == NULL || len == 0) return 0;
-
-	user_mem_assert(curenv, packet, len, PTE_U | PTE_P | PTE_W);
+	if (packet == 0 || len == 0) return 0;
 
 	int r = rx_recv(packet, len);
 	if (r >= 0) return r;
 
-	curenv->env_ipc_ether_recv = 1;
-	curenv->env_ipc_dstva = (void *)UTOP;
+	curenv->env_ipc_ether_recv = true;
+	curenv->env_ipc_ether_addr = packet;
+	curenv->env_ipc_ether_len = len;
 	curenv->env_status = ENV_NOT_RUNNABLE;
 	sched_yield();
 }
@@ -481,7 +480,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		case SYS_send_ether_packet:
 			return sys_send_ether_packet((const char *)a1, a2);
 		case SYS_recv_ether_packet:
-			return sys_recv_ether_packet((char *)a1, a2);
+			return sys_recv_ether_packet(a1, a2);
 		default:
 			return -E_INVAL;
 	}

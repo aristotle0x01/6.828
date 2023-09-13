@@ -132,7 +132,7 @@ sys_send_ether_packet(const char *packet, size_t length)
 
 // SYS_recv_ether_packet
 int
-sys_recv_ether_packet(char *packet, size_t length)
+sys_recv_ether_packet(uint32_t packet, size_t length)
 {
 	return syscall(SYS_recv_ether_packet, 0, (uint32_t)packet, length, 0, 0, 0);
 }

@@ -70,6 +70,8 @@ struct Env {
 
 	// Lab 6
 	bool env_ipc_ether_recv;	// Env is blocked receiving ethernet packet
+	physaddr_t env_ipc_ether_addr; // physical address receiving ethernet packet
+	size_t env_ipc_ether_len;
 };
 
 #endif // !JOS_INC_ENV_H

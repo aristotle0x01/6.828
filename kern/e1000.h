@@ -117,7 +117,7 @@ void rx_init(void);
 
 void tx_demo(void);
 int32_t tx_send(const char *packet, size_t len);
-int32_t rx_recv(char *packet, size_t len);
+int32_t rx_recv(physaddr_t packet, size_t len);
 
 void nic_intr();
 #endif  // SOL >= 6
