@@ -14,6 +14,7 @@
 #include <kern/cpu.h>
 #include <kern/spinlock.h>
 #include <kern/time.h>
+#include <kern/e1000.h>
 
 static struct Taskstate ts;
 
@@ -143,7 +144,7 @@ trap_init(void)
 	SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, handler40, 0);
 	SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, handler41, 0);
 	SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, handler42, 0);
-	SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, handler43, 0);
+	SETGATE(idt[IRQ_OFFSET+IRQ_NIC], 0, GD_KT, handler43, 0);
 	SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, handler44, 0);
 	SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, handler45, 0);
 	SETGATE(idt[IRQ_OFFSET+IRQ_IDE], 0, GD_KT, handler46, 0);
@@ -342,7 +343,10 @@ trap_dispatch(struct Trapframe *tf)
 		case (IRQ_OFFSET + 8):
 		case (IRQ_OFFSET + 9):
 		case (IRQ_OFFSET + 10):
-		case (IRQ_OFFSET + 11):
+		case (IRQ_OFFSET + IRQ_NIC):
+			nic_handler(tf);
+			lapic_eoi();
+			break;
 		case (IRQ_OFFSET + 12):
 		case (IRQ_OFFSET + 13):
 		case (IRQ_OFFSET + 15):
@@ -517,6 +521,11 @@ to_history_bin_you_go:
 		curenv->env_id, fault_va, tf->tf_eip);
 	print_trapframe(tf);
 	env_destroy(curenv);
+}
+
+void
+nic_handler(struct Trapframe *tf) {
+	nic_intr();
 }
 
 void

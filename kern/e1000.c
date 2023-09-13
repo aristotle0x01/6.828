@@ -2,8 +2,13 @@
 #include <kern/pmap.h>
 #include <inc/string.h>
 #include <inc/error.h>
+#include <inc/env.h>
+#include <inc/trap.h>
+#include <kern/picirq.h>
+#include <kern/env.h>
 
 // LAB 6: Your driver code here
+
 extern volatile uint8_t *e1000_bar0;
 
 #define MAX_TX_DESCRIPTOR 64 /* max num of tx descritor in ring buffer */
@@ -31,6 +36,9 @@ pci_nic_attach(struct pci_func *pcif)
 	tx_init();
 	// tx_demo();
 	rx_init();
+
+    assert(pcif->irq_line == IRQ_NIC);
+    irq_setmask_8259A(irq_mask_8259A & ~(1<<IRQ_NIC));
 
 	return 1;
 }
@@ -132,6 +140,9 @@ rx_init(void) {
     e1000_reg(E1000_RDT) = MAX_RX_DESCRIPTOR-1;
     e1000_rdt = (uint32_t *)(e1000_bar0+E1000_RDT);
 
+    e1000_reg(E1000_RDTR) = 0;
+    e1000_reg(E1000_IMS) = E1000_IMS_RXT0;
+    
     // the Receive Control (RCTL) register
     e1000_reg(E1000_RCTL) = E1000_RCTL_EN|E1000_RCTL_SECRC|E1000_RCTL_BAM;
 }
@@ -142,6 +153,8 @@ rx_recv(char *packet, size_t len) {
 
     if (packet == NULL || len == 0) return 0;
 
+    static bool interrupt = false;
+
     // by: make E1000_DEBUG=TX,TXERR,RX,RXERR,RXFILTER run-net_testinput-nox
     // there would be "e1000: RCTL: 127, mac_reg[RCTL] = 0x4008002" in console output
 
@@ -151,9 +164,14 @@ rx_recv(char *packet, size_t len) {
     // *e1000_rdt should be updated to ri but not ri+1, so there will always a slot 
     // wasted as tail mark
     uint32_t ri = (*e1000_rdt + 1)%MAX_RX_DESCRIPTOR;
-    if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) 
-        return -E_RX_QUEUE_EMPTY;
+    if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) {
+        if(!interrupt)
+            e1000_reg(E1000_IMS) = E1000_IMS_RXT0;
+	    interrupt = true;
 
+        return -E_RX_QUEUE_EMPTY;
+    }
+    
     if (len > rx_desc_list[ri].length) len = rx_desc_list[ri].length;
     memcpy(packet, rx_buffer_array[ri], len);
 
@@ -171,5 +189,23 @@ rx_recv(char *packet, size_t len) {
     // the first new descriptor.
     *e1000_rdt = ri;
 
+    if(interrupt)
+        e1000_reg(E1000_IMC) = E1000_IMC_RXT0;
+	interrupt = false;
+
     return len;
+}
+
+void nic_intr() {
+    // reading this register implicitly acknowledges any pending interrupt events
+	int icr = e1000_reg(E1000_ICR);
+
+	for (int i = 0; i < NENV; i++) {
+        if (envs[i].env_ipc_ether_recv && envs[i].env_status == ENV_NOT_RUNNABLE) {
+            envs[i].env_ipc_ether_recv = false;
+            envs[i].env_status = ENV_RUNNABLE;
+            envs[i].env_tf.tf_regs.reg_eax = -1;
+            return;
+        }
+    }
 }

@@ -38,7 +38,10 @@
 #define E1000_RDH      0x02810  /* RX Descriptor Head - RW */
 #define E1000_RDT      0x02818  /* RX Descriptor Tail - RW */
 #define E1000_RA       0x05400  /* Receive Address - RW Array */
+#define E1000_ICR      0x000C0  /* Interrupt Cause Read - R/clr */
+#define E1000_ICS      0x000C8  /* Interrupt Cause Set - WO */
 #define E1000_IMS      0x000D0  /* Interrupt Mask Set - RW */
+#define E1000_IMC      0x000D8  /* Interrupt Mask Clear - WO */
 #define E1000_RCTL     0x00100  /* RX Control - RW */
 
 /* Transmit Control */
@@ -61,6 +64,9 @@
 #define E1000_IMS_RXDMT0    0x00000010    		/* rx desc min. threshold */
 #define E1000_IMS_RXSEQ     0x00000008     		/* rx sequence error */
 #define E1000_IMS_LSC       0x00000004       	/* Link Status Change */
+
+#define E1000_RDTR     		0x02820       	/* RX Delay Timer - RW */
+#define E1000_IMC_RXT0      0x00000080      /* rx timer intr */
 
 /* Receive Control */
 #define E1000_RCTL_RST            0x00000001    /* Software reset */
@@ -114,4 +120,5 @@ void tx_demo(void);
 int32_t tx_send(const char *packet, size_t len);
 int32_t rx_recv(char *packet, size_t len);
 
+void nic_intr();
 #endif  // SOL >= 6

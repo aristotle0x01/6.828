@@ -428,7 +428,13 @@ sys_recv_ether_packet(char *packet, size_t len)
 
 	user_mem_assert(curenv, packet, len, PTE_U | PTE_P | PTE_W);
 
-	return rx_recv(packet, len);
+	int r = rx_recv(packet, len);
+	if (r >= 0) return r;
+
+	curenv->env_ipc_ether_recv = 1;
+	curenv->env_ipc_dstva = (void *)UTOP;
+	curenv->env_status = ENV_NOT_RUNNABLE;
+	sched_yield();
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
