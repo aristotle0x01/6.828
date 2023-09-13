@@ -153,8 +153,6 @@ rx_recv(char *packet, size_t len) {
 
     if (packet == NULL || len == 0) return 0;
 
-    static bool interrupt = false;
-
     // by: make E1000_DEBUG=TX,TXERR,RX,RXERR,RXFILTER run-net_testinput-nox
     // there would be "e1000: RCTL: 127, mac_reg[RCTL] = 0x4008002" in console output
 
@@ -165,9 +163,8 @@ rx_recv(char *packet, size_t len) {
     // wasted as tail mark
     uint32_t ri = (*e1000_rdt + 1)%MAX_RX_DESCRIPTOR;
     if (!(rx_desc_list[ri].status & E1000_RXD_STAT_DD)) {
-        if(!interrupt)
-            e1000_reg(E1000_IMS) = E1000_IMS_RXT0;
-	    interrupt = true;
+        e1000_reg(E1000_IMC) = E1000_IMC_RXT0;
+        e1000_reg(E1000_IMS) = E1000_IMS_RXT0;
 
         return -E_RX_QUEUE_EMPTY;
     }
@@ -189,13 +186,13 @@ rx_recv(char *packet, size_t len) {
     // the first new descriptor.
     *e1000_rdt = ri;
 
-    if(interrupt)
-        e1000_reg(E1000_IMC) = E1000_IMC_RXT0;
-	interrupt = false;
-
+    e1000_reg(E1000_IMC) = E1000_IMC_RXT0;
+    e1000_reg(E1000_IMS) = E1000_IMS_RXT0;
+    
     return len;
 }
 
+// ref: https://github.com/xingdl2007/6.828-2017/blob/master/kern/e1000.c
 void nic_intr() {
     // reading this register implicitly acknowledges any pending interrupt events
 	int icr = e1000_reg(E1000_ICR);

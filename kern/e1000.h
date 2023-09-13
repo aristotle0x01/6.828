@@ -39,7 +39,6 @@
 #define E1000_RDT      0x02818  /* RX Descriptor Tail - RW */
 #define E1000_RA       0x05400  /* Receive Address - RW Array */
 #define E1000_ICR      0x000C0  /* Interrupt Cause Read - R/clr */
-#define E1000_ICS      0x000C8  /* Interrupt Cause Set - WO */
 #define E1000_IMS      0x000D0  /* Interrupt Mask Set - RW */
 #define E1000_IMC      0x000D8  /* Interrupt Mask Clear - WO */
 #define E1000_RCTL     0x00100  /* RX Control - RW */

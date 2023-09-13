@@ -18,6 +18,8 @@ input(envid_t ns_envid)
 	char buf[MAX_ETHERNET_PACKET_LEN];
 	int r;
 	while (1) {
+		// recv otherwise yield and wait interruption(nic_intr: return with -1)
+		// then recv can succeed in next round
 		r = sys_recv_ether_packet(buf, MAX_ETHERNET_PACKET_LEN);
 		if (r < 0) continue;
 
