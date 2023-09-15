@@ -106,6 +106,8 @@ umain(int argc, char **argv)
 		hexdump("input: ", pkt->jp_data, pkt->jp_len);
 		cprintf("\n");
 
+		sys_page_unmap(0, pkt);
+
 		// Only indicate that we're waiting for packets once
 		// we've received the ARP reply
 		if (first)

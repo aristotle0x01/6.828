@@ -132,7 +132,19 @@ sys_send_ether_packet(const char *packet, size_t length)
 
 // SYS_recv_ether_packet
 int
-sys_recv_ether_packet(uint32_t packet, size_t length)
+sys_recv_ether_packet(physaddr_t ring_index)
 {
-	return syscall(SYS_recv_ether_packet, 0, (uint32_t)packet, length, 0, 0, 0);
+	return syscall(SYS_recv_ether_packet, 0, (uint32_t)ring_index, 0, 0, 0, 0);
+}
+
+int
+sys_recv_mem_privilege(void *va)
+{
+	return syscall(SYS_recv_mem_privilege, 0, (uint32_t)va, 0, 0, 0, 0);
+}
+
+int
+sys_recv_tail_update(uint32_t tail)
+{
+	return syscall(SYS_recv_tail_update, 0, tail, 0, 0, 0, 0);
 }

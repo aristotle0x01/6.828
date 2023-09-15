@@ -421,19 +421,48 @@ sys_send_ether_packet(const char *packet, size_t len)
 
 // send ether packet.
 static int
-sys_recv_ether_packet(physaddr_t packet, size_t len)
+sys_recv_ether_packet(physaddr_t ring_index)
 {
 	// LAB 6: Your code here.
-	if (packet == 0 || len == 0) return 0;
-
-	int r = rx_recv(packet, len);
-	if (r >= 0) return r;
+	int r = rx_recv(ring_index);
+	if (r >= 0) {
+		void *pt = KADDR(ring_index);
+		return r;
+	}
 
 	curenv->env_ipc_ether_recv = true;
-	curenv->env_ipc_ether_addr = packet;
-	curenv->env_ipc_ether_len = len;
+	curenv->env_ipc_ether_addr = ring_index;
+	curenv->env_tf.tf_regs.reg_eax = -1;
 	curenv->env_status = ENV_NOT_RUNNABLE;
 	sched_yield();
+}
+
+// update nic receive ring tail.
+static int
+sys_recv_mem_privilege(void *va)
+{
+	// LAB 6: Your code here.
+	uintptr_t dva = (uintptr_t)va;
+	for (int i=0; i<MAX_RX_DESCRIPTOR; i++) {
+		struct PageInfo *pi = page_lookup(kern_pgdir, rx_buffer_array[i], 0);
+		if (!pi) 
+			return -E_INVAL;
+		if (page_insert(curenv->env_pgdir, pi, (void *)dva, PTE_U|PTE_P)) 
+			return -E_NO_MEM;
+		
+		// cprintf("sys_recv_mem_privilege 0x%08x\n", dva);
+		dva += PGSIZE;
+	}
+	
+	return 0;
+}
+
+// update nic receive ring tail.
+static int
+sys_recv_tail_update(uint32_t tail)
+{
+	// LAB 6: Your code here.
+	return rx_tail_update(tail);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -480,7 +509,11 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		case SYS_send_ether_packet:
 			return sys_send_ether_packet((const char *)a1, a2);
 		case SYS_recv_ether_packet:
-			return sys_recv_ether_packet(a1, a2);
+			return sys_recv_ether_packet((physaddr_t)a1);
+		case SYS_recv_mem_privilege:
+			return sys_recv_mem_privilege((void *)a1);
+		case SYS_recv_tail_update:
+			return sys_recv_tail_update(a1);
 		default:
 			return -E_INVAL;
 	}

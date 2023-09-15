@@ -20,6 +20,8 @@ enum {
 	SYS_time_msec,
 	SYS_send_ether_packet,
 	SYS_recv_ether_packet,
+	SYS_recv_mem_privilege,
+	SYS_recv_tail_update,
 	NSYSCALLS
 };
 

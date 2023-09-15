@@ -336,6 +336,11 @@ trap_dispatch(struct Trapframe *tf)
 			cprintf("IDE interrupt on irq 14\n");
 			print_trapframe(tf);
 			break;
+		case (IRQ_OFFSET + IRQ_NIC):
+			cprintf("nic interrupt on irq 11\n");
+			nic_handler(tf);
+			lapic_eoi();
+			break;
 		case (IRQ_OFFSET + 2):
 		case (IRQ_OFFSET + 3):
 		case (IRQ_OFFSET + 5):
@@ -343,10 +348,6 @@ trap_dispatch(struct Trapframe *tf)
 		case (IRQ_OFFSET + 8):
 		case (IRQ_OFFSET + 9):
 		case (IRQ_OFFSET + 10):
-		case (IRQ_OFFSET + IRQ_NIC):
-			nic_handler(tf);
-			lapic_eoi();
-			break;
 		case (IRQ_OFFSET + 12):
 		case (IRQ_OFFSET + 13):
 		case (IRQ_OFFSET + 15):

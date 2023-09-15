@@ -1,6 +1,7 @@
 #ifndef JOS_KERN_E1000_H
 #define JOS_KERN_E1000_H
 
+#include <inc/mmu.h>
 #include <kern/pcireg.h>
 #include <kern/pci.h>
 
@@ -89,6 +90,10 @@
 
 #define e1000_reg(pos) (*((volatile uint32_t *)(e1000_bar0 + pos)))
 
+#define MAX_RX_BUF_BYTES PGSIZE /* max num of rx descritor in ring buffer */
+#define MAX_RX_DESCRIPTOR 128 /* max num of rx descritor in ring buffer */
+extern uint8_t rx_buffer_array[MAX_RX_DESCRIPTOR][MAX_RX_BUF_BYTES];
+
 struct tx_desc
 {
 	uint64_t addr;
@@ -117,7 +122,8 @@ void rx_init(void);
 
 void tx_demo(void);
 int32_t tx_send(const char *packet, size_t len);
-int32_t rx_recv(physaddr_t packet, size_t len);
+int32_t rx_recv(physaddr_t ring_index);
+int32_t rx_tail_update(uint32_t tail);
 
 void nic_intr();
 #endif  // SOL >= 6
