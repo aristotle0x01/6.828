@@ -46,6 +46,8 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 
 - memory-mapped I/O
 
+  <img src="./raw/lab6-nic-host-mapping.png?raw=true" alt="registers" style="zoom:35%; float:left" />
+
 - direct memory access
 
 - transmit descriptor ring buffer (legacy mode)
@@ -78,11 +80,11 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 
   <img src="./raw/lab6-rx-ring.png?raw=true" alt="rx ring" style="zoom:45%; float:left" />
 
-  ------
+------
 
   <img src="./raw/lab6-rx-desc.png?raw=true" alt="rx desc" style="zoom:45%; float:left" />
 
-  ------
+------
 
   <img src="./raw/lab6-rx-desc-status.png?raw=true" alt="rx status" style="zoom:45%; float:left" />
 
@@ -91,8 +93,6 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 - lwip tcp/ip stack; web server
 
 
-
-## Questions
 
 
 
