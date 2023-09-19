@@ -80,19 +80,45 @@ Linux Network Receive Stack Monitoring and Tuning Deep Dive (Patrick Ladd, pdf):
 
   <img src="./raw/lab6-rx-ring.png?raw=true" alt="rx ring" style="zoom:45%; float:left" />
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ------
 
   <img src="./raw/lab6-rx-desc.png?raw=true" alt="rx desc" style="zoom:45%; float:left" />
+
+
+
+
 
 ------
 
   <img src="./raw/lab6-rx-desc-status.png?raw=true" alt="rx status" style="zoom:45%; float:left" />
 
+
+
+
+
+
+
 - <font color="red">interrupt & poll</font>
 
+  <img src="./raw/lab6-rx-intr.png?raw=true" alt="rx status" style="zoom:40%; float:left" />
+
 - lwip tcp/ip stack; web server
-
-
 
 
 
