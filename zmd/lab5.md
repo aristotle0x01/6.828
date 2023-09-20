@@ -28,7 +28,7 @@
     };
     ```
 
-    <img src="./raw/lab5-disk.png?raw=true" alt="file" style="zoom:80%; float:left" />
+    <img src="../raw/lab5-disk.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
   - file meta-data: struct File
 
@@ -49,13 +49,13 @@
     } __attribute__((packed));	// required only on some 64-bit machines
     ```
 
-    <img src="./raw/lab5-file.png?raw=true" alt="file" style="zoom:80%; float:left" />
+    <img src="../raw/lab5-file.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
   - directory vs regular file
 
     unlike xv6, no special inode blocks; the tree-like hierarchy has to be deduced from cache in memory
     
-    <img src="./raw/lab5-file-hierarchy.png?raw=true" alt="file" style="zoom:80%; float:left" />
+    <img src="../raw/lab5-file-hierarchy.png?raw=true" alt="file" style="zoom:80%; float:left" />
 
 - disk access priviledge: **`ENV_TYPE_FS`; `IOPL_3`**
 
@@ -129,7 +129,7 @@
 
 ## jos file ipc
 
-<img src="./raw/lab5-jos-file-ipc.png?raw=true" alt="jos file system" style="zoom:70%; float:left" />
+<img src="../raw/lab5-jos-file-ipc.png?raw=true" alt="jos file system" style="zoom:70%; float:left" />
 
 
 
@@ -143,7 +143,7 @@ Ans: from xv6 implementation, if `filewrite` was broken into several parts, then
 
 q2:  xv6 file system
 
-<img src="./raw/xv6-file-system.png?raw=true" alt="xv6 file system" style="zoom:50%; float:left" />
+<img src="../raw/xv6-file-system.png?raw=true" alt="xv6 file system" style="zoom:50%; float:left" />
 
 
 

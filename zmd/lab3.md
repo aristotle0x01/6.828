@@ -30,11 +30,11 @@
 
 If you now run `user/breakpoint`, you should be able to run backtrace from the kernel monitor and see the backtrace traverse into `lib/libmain.c` before the kernel panics with a page fault. What causes this page fault? 
 
-<img src="./raw/lab3-1.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-1.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
-<img src="./raw/lab3-2.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
+<img src="../raw/lab3-2.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
 
-<img src="./raw/lab3-3.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-3.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 Referenced user empty page, so page faulted
 
@@ -80,7 +80,7 @@ Referenced user empty page, so page faulted
 
   `trapentry.S trap.c`
 
-  <img src="./raw/lab3-10.jpg?raw=true" alt="call convention" style="zoom:25%;float: left" />
+  <img src="../raw/lab3-10.jpg?raw=true" alt="call convention" style="zoom:25%;float: left" />
 
 - page fault & why it shouldn't happen in kernel 
 
@@ -98,19 +98,19 @@ Referenced user empty page, so page faulted
 
 ### user & kernel spaces
 
-<img src="./raw/lab3-kernel-space.png?raw=true" alt="call convention" style="zoom:50%;float: left" />
+<img src="../raw/lab3-kernel-space.png?raw=true" alt="call convention" style="zoom:50%;float: left" />
 
 ### interrupt priviledge
 
 #### **interrupt descriptor table (IDT)**
 
-<img src="./raw/lab3-4.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-4.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
-<img src="./raw/lab3-5.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
+<img src="../raw/lab3-5.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
 
 #### **Interrupt-Handler Procedures**
 
-<img src="./raw/lab3-6.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
+<img src="../raw/lab3-6.jpg?raw=true" alt="call convention" style="zoom:35%;float: left" />
 
 
 
@@ -146,11 +146,11 @@ struct Taskstate {
 
 ```
 
-<img src="./raw/lab3-7.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-7.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 ##### **trapframe on stack**
 
-<img src="./raw/lab3-8.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-8.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 
 
@@ -171,7 +171,7 @@ struct Taskstate {
 
 If the debugger sets the TF (trace flag), then every instruction will cause the debug (#1) interrupt to occur
 
-<img src="./raw/lab3-9.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
+<img src="../raw/lab3-9.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 [Why Single Stepping Instruction on X86?](https://stackoverflow.com/questions/7941988/why-single-stepping-instruction-on-x86)
 

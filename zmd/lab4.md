@@ -100,9 +100,9 @@ duppage(envid_t dstenv, void *addr)
 
 b. `duppage(envid, ROUNDDOWN(&addr, PGSIZE))` seems like xv6 user stack; while`duppage(envid, (void *)(USTACKTOP-PGSIZE))` use jos user stack. actually they are the same, since <u>addr</u> is a local var, then <u>&addr</u> will be its address, which is the stack memory address, further `ROUNDDOWN(&addr, PGSIZE)` would be equal to `(USTACKTOP-PGSIZE)`
 
-<img src="./raw/xv6-user-stack.jpg?raw=true" alt="xv6" style="zoom:50%; float:left" />
+<img src="../raw/xv6-user-stack.jpg?raw=true" alt="xv6" style="zoom:50%; float:left" />
 
-<img src="./raw/jos-user-stack.jpg?raw=true" alt="jos" style="zoom:35%; float:left" />
+<img src="../raw/jos-user-stack.jpg?raw=true" alt="jos" style="zoom:35%; float:left" />
 
 ```
 envid_t
@@ -131,11 +131,11 @@ dumbfork(void)
 
 a.first stack overview
 
-<img src="./raw/lab4-stack-overview.png?raw=true" alt="jos stack view" style="zoom:100%; float:left" />
+<img src="../raw/lab4-stack-overview.png?raw=true" alt="jos stack view" style="zoom:100%; float:left" />
 
 b. stack arrangement & blank word
 
-<img src="./raw/lab4-user-level-page-fault-exception.png?raw=true" alt="user exception stack" style="zoom:50%; float:left" />
+<img src="../raw/lab4-user-level-page-fault-exception.png?raw=true" alt="user exception stack" style="zoom:50%; float:left" />
 
 
 
@@ -143,7 +143,7 @@ b. stack arrangement & blank word
 
 how to interpret uvpt and uvpd
 
-<img src="./raw/uvpt-interpretation.png?raw=true" alt="jos stack view" style="zoom:70%; float:left" />
+<img src="../raw/uvpt-interpretation.png?raw=true" alt="jos stack view" style="zoom:70%; float:left" />
 
 implementation of copy-on-write
 
@@ -237,7 +237,7 @@ sleep-locks leave interrupts enabled, they cannot be used in interrupt handlers.
 - xv6 acquires ptable.lock in one thread (often in yield) and releases the lock in a different thread (the scheduler thread or another next kernel thread): **<u>this is very interesting, that is to say, lock is maintained per cpu wide, not merely per thread wide</u>**
 - when a new process is first scheduled, it begins at **<u>forkret</u>**. forkret exists to release the ptable.lock
 
-<img src="./raw/xv6-scheduler-locking.png?raw=true" alt="ssh_port" style="zoom:60%;float: left" />
+<img src="../raw/xv6-scheduler-locking.png?raw=true" alt="ssh_port" style="zoom:60%;float: left" />
 
 ### **sleep and wakeup**
 

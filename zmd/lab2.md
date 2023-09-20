@@ -133,19 +133,19 @@ segmentation is a way of dividing memory for programs:
 - protected flat model
 - multi-segmented model
 
-<img src="./raw/lab2-1.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-1.jpg?raw=true" alt="segments" style="zoom:50%;float: left" />
 
 most os today uses flat model, which amounts to not using segmentation. Since it would require programs all loaded in memory, does not make economical sense.
 
 #### logical, effective, linear and physical address
 
-<img src="./raw/lab2-2.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
+<img src="../raw/lab2-2.jpg?raw=true" alt="address" style="zoom:40%;float: left" />
 
-<img src="./raw/lab2-3.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-3.jpg?raw=true" alt="address" style="zoom:50%;float: left" />
 
 #### **Segment Selectors**
 
-<img src="./raw/lab2-4.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+<img src="../raw/lab2-4.jpg?raw=true" alt="address" style="zoom:50%;" />
 
 - index: 15-3, support 8192 descriptors in GDT
 - TI: 0=GDT, 1=LDT
@@ -153,7 +153,7 @@ most os today uses flat model, which amounts to not using segmentation. Since it
 
 ##### **segment Registers**
 
-<img src="./raw/lab2-5.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+<img src="../raw/lab2-5.jpg?raw=true" alt="registers" style="zoom:50%;" />
 
 > When a segment selector is loaded into the visible part of a segment register, the processor also loads the hidden part of the segment register with the base address, segment limit, and access control information from the segment descriptor pointed to by the segment selector
 
@@ -166,7 +166,7 @@ two kinds of instructions for loading segment registers:
 
 if the **<u>S</u>** bit 0 for system descriptor, 1 for segment descriptor
 
-<img src="./raw/lab2-6.jpg?raw=true" alt="ssh_port" style="zoom:50%;" />
+<img src="../raw/lab2-6.jpg?raw=true" alt="descriptors" style="zoom:50%;" />
 
 **segment descriptor**:GDTR Register
 
@@ -174,7 +174,7 @@ if the **<u>S</u>** bit 0 for system descriptor, 1 for segment descriptor
 
 two types of segment descriptor (stack is also data): code and data
 
-<img src="./raw/lab2-7.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
+<img src="../raw/lab2-7.jpg?raw=true" alt="descriptors" style="zoom:40%;float: left" />
 
 > All data segments are nonconforming, meaning that they cannot be accessed by less privileged programs or procedures
 >
@@ -182,7 +182,7 @@ two types of segment descriptor (stack is also data): code and data
 
 *Global and Local Descriptor Tables*
 
-<img src="./raw/lab2-9.jpg?raw=true" alt="ssh_port" style="zoom:30%;float: left" />
+<img src="../raw/lab2-9.jpg?raw=true" alt="descriptors" style="zoom:30%;float: left" />
 
 **system descriptor**: IDTR register
 
@@ -193,13 +193,9 @@ two types of segment descriptor (stack is also data): code and data
 - Trap-gate descriptor
 - Task-gate descriptor
 
-<img src="./raw/lab2-8.jpg?raw=true" alt="ssh_port" style="zoom:40%;float: left" />
+<img src="../raw/lab2-8.jpg?raw=true" alt="descriptors" style="zoom:40%;float: left" />
 
 
-
-看一看代码层面的数据结构；看一下执行时的情况
-
-分析一下GDT加载的情况
 
 ### general: paging
 
@@ -215,11 +211,11 @@ To effiently share physical memory between multiple tasks, given them a 4Gb cons
 
 #### translation
 
-<img src="./raw/lab2-11.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-11.jpg?raw=true" alt="paging" style="zoom:50%;float: left" />
 
 ------
 
-<img src="./raw/lab2-10.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-10.jpg?raw=true" alt="attributes" style="zoom:50%;float: left" />
 
 
 
@@ -261,7 +257,7 @@ pte_t entry_pgtable[1024] = {
 
 #### jos paging implementation
 
-<img src="./raw/lab2-14.png?raw=true" alt="ssh_port" style="zoom:100%;float: left" />
+<img src="../raw/lab2-14.png?raw=true" alt="jos paging" style="zoom:100%;float: left" />
 
 
 
@@ -271,7 +267,7 @@ pte_t entry_pgtable[1024] = {
 
 #### protection rings
 
-<img src="./raw/lab2-15.png?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-15.png?raw=true" alt="priv rings" style="zoom:50%;float: left" />
 
 #### RPL & CPL & DPL
 
@@ -284,7 +280,7 @@ pte_t entry_pgtable[1024] = {
 
 - before the processor loads a segment selector into a segment register, it performs a privilege check
 
-  <img src="./raw/lab2-16.png?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+  <img src="../raw/lab2-16.png?raw=true" alt="registers" style="zoom:50%;float: left" />
 
 - implicit use of segment registers, I.e. “ESP” == “SS:ESP”, “EIP” == “CS:EIP”
 
@@ -294,9 +290,9 @@ $$
 max(CPL, RPL) ≤ DPL
 $$
 
-<img src="./raw/lab2-17.png?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab2-17.png?raw=true" alt="priv calc" style="zoom:50%;float: left" />
 
-<img src="./raw/lab2-18.png?raw=true" alt="ssh_port" style="zoom:45%;float: left" />
+<img src="../raw/lab2-18.png?raw=true" alt="priv calc" style="zoom:45%;float: left" />
 
 from above pics, only after the check passed can the segment descriptor content be put into correponding register designated by the segment selector, and with base, limits, access info put into hidden parts. That is to say segment selector is just a dynamic temp value, is under software control.
 
@@ -314,7 +310,7 @@ CPL == RPL == DPL
 
 2. for far form accessing nonconforming code segments, **CPL == DPL and RPL <= CPL**
 
-   <img src="./raw/lab2-19.png?raw=true" alt="ssh_port" style="zoom:40%;" />
+   <img src="../raw/lab2-19.png?raw=true" alt="cpl" style="zoom:40%;" />
 
 3. for far form accessing conforming code segments, **CPL >= DPL, RPL won't be checked**
 
@@ -324,11 +320,11 @@ CPL == RPL == DPL
 
 4. **accessing a Code Segment Through a Call Gate**
 
-   <img src="./raw/lab2-20.png?raw=true" alt="ssh_port" style="zoom:40%;" />
+   <img src="../raw/lab2-20.png?raw=true" alt="call gate" style="zoom:40%;" />
 
-   <img src="./raw/lab2-21.png?raw=true" alt="ssh_port" style="zoom:40%;" />
+   <img src="../raw/lab2-21.png?raw=true" alt="call gate" style="zoom:40%;" />
 
-   <img src="./raw/lab2-22.png?raw=true" alt="ssh_port" style="zoom:40%;" />
+   <img src="../raw/lab2-22.png?raw=true" alt="call gate" style="zoom:40%;" />
 
 5. stack switching
 
@@ -338,7 +334,7 @@ CPL == RPL == DPL
    >
    > Pointers to the privilege level 0, 1, and 2 stacks are stored in the TSS for the currently running task (see Figure 6-2). Each of these pointers consists of a segment selector and a stack pointer (loaded into the ESP register)
 
-   <img src="./raw/lab2-23.png?raw=true" alt="ssh_port" style="zoom:40%;" />
+   <img src="../raw/lab2-23.png?raw=true" alt="task switch" style="zoom:40%;" />
 
    
 
@@ -376,7 +372,7 @@ CPL == RPL == DPL
 
 4. two level page-directory and the page-table
 
-   <img src="./raw/lab2-24.png?raw=true" alt="ssh_port" style="zoom:30%;" />
+   <img src="../raw/lab2-24.png?raw=true" alt="paging level" style="zoom:30%;" />
 
 5. overrides to Page Protection
 

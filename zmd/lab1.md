@@ -145,7 +145,7 @@ Functions can do anything that doesn't violate contract. By convention, GCC does
 
 ### boot process
 
-<img src="./raw/lab1-booting_process.png?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab1-booting_process.png?raw=true" alt="booting" style="zoom:50%;float: left" />
 
 **For boot process and hardware env**, ref: [xv6: a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2018/xv6/book-rev11.pdf). Appendix A:PC hardware; Appendix B: The boot loader
 
@@ -186,9 +186,9 @@ git -c http.sslVerify=false clone https://pdos.csail.mit.edu/6.828/2018/jos.git 
 
 the first instruction failed would be `jmp *%eax `  (entry.S line 68: jmp 0xf010002c)
 
-<img src="./raw/lab1-e7-1.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab1-e7-1.jpg?raw=true" alt="e7" style="zoom:40%;float: left" />
 
-<img src="./raw/lab1-e7-2.jpg?raw=true" alt="ssh_port" style="zoom:50%;float: left" />
+<img src="../raw/lab1-e7-2.jpg?raw=true" alt="e7" style="zoom:40%;float: left" />
 
 
 
@@ -204,7 +204,7 @@ Stack space is 0x10000 == 64k. Sit on the high end of memory.
 
 Three 32-bit words would each recursive nesting level of `test_backtrace` push on the stack: parameter, ret address, saved value of calling ebp.
 
-<img src="./raw/lab1-e10-1.jpg?raw=true" alt="call convention" style="zoom:50%;float: left" />
+<img src="../raw/lab1-e10-1.jpg?raw=true" alt="call convention" style="zoom:40%;float: left" />
 
 from: [The 32 bit x86 C Calling Convention](https://aaronbloomfield.github.io/pdr/book/x86-32bit-ccc-chapter.pdf)
 
