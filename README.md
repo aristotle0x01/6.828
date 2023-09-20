@@ -87,10 +87,6 @@ add "#include <sys/sysmacros.h>" to "qga/commands-posix.c"
 
 ## Labs
 
-**[hw.md](zmd/hw.md)**
-
-<img src="./raw/hw-cpu-alram.png?raw=true" alt="cpu alarm" style="zoom:35%;float: left" />
-
 **[lab1.md](zmd/lab1.md)**
 
 <img src="./raw/lab1-booting_process.png?raw=true" alt="booting" style="zoom:35%;float: left" />
@@ -115,3 +111,6 @@ add "#include <sys/sysmacros.h>" to "qga/commands-posix.c"
 
 <img src="./raw/lab6-nic-host-mapping.png?raw=true" alt="mapping" style="zoom:35%; float:left" />
 
+**[hw.md](zmd/hw.md)**
+
+<img src="./raw/hw-cpu-alram.png?raw=true" alt="cpu alarm" style="zoom:35%;float: left" />
